@@ -29,11 +29,9 @@ public class DoorItem : NetworkBehaviour
         if (TryGetComponent<GrabbableObject>(out var grabbable))
         {
             grabbable.IsResettable = false;
-        }
-
-        if (grabbable != null)
-        {
             grabbable.Drop();
+            grabbable.enabled = false;
+
         }
 
         if (rb != null)

@@ -12,14 +12,10 @@ public class AbacusManager : NetworkBehaviour
         public int a, b, c, d; // 4 wygrane
     }
 
-    [Header("Displays & UI")]
-    [Tooltip("Tablica 1: Treœæ g³ównej zagadki z wylosowanymi danymi")]
     [SerializeField] private TMP_Text noteDisplayText;
-    [Tooltip("Tablica 2: Informacja zwrotna od ducha o poprawnoœci i aktualnym kroku")]
     [SerializeField] private TMP_Text statusFeedbackText;
 
-    [Header("Abacuses (Dok³adnie 8 sztuk w kolejnoœci!)")]
-    [Tooltip("0: Œrednia, 1-4: (xi - avg)^2, 5: Suma kwadratów, 6: Wariancja, 7: Odchylenie (wewn¹trz pierwiastka)")]
+
     [SerializeField] private Abacus[] abacuses = new Abacus[8];
 
     [SerializeField] private GameObject keyItem;
@@ -40,20 +36,21 @@ public class AbacusManager : NetworkBehaviour
         new PresetDataSet { a = 5,  b = 9,  c = 11, d = 15 }  // Avg=10. Kwadraty: 25, 1, 1, 25. Suma=52 -> Var=13
     };
 
-    // Polecenia przejœcia do kolejnych liczyde³ po sukcesie
+    private string introText = "<mark=#FFFFFF0F><color=white>Pomo¿esz mi rozwi¹zaæ zagadkê z tej notatki? Zacznij od obliczenia œredniej.</color></mark>";
+    private string failText = "<mark=#FFFFFF0F><color=red>To nie jest poprawna liczba</color></mark>";
+
     private readonly string[] stepNextInstructions = new string[]
     {
-        "Dobrze! Teraz oblicz kwadrat ró¿nicy pierwszej wygranej od œredniej.",
-        "Œwietnie! Teraz oblicz kwadrat ró¿nicy drugiej wygranej od œredniej.",
-        "Zgadza siê! Teraz oblicz kwadrat ró¿nicy trzeciej wygranej od œredniej.",
-        "Doskonale! Oblicz kwadrat ró¿nicy czwartej wygranej od œredniej.",
-        "Poprawnie! Zsumuj wszystkie cztery kwadraty na kolejnym liczydle.",
-        "Wybornie! Oblicz wariancjê (podziel sumê przez 4).",
-        "Kapitalnie! WprowadŸ wartoœæ do wnêtrza pierwiastka dla odchylenia.",
-        "Uda³o ci siê! Trzymaj to w nagrodê."
+        "<mark=#FFFFFF0F><color=green>Dobrze! Teraz oblicz kwadrat ró¿nicy pierwszej wygranej.</color></mark>",
+        "<mark=#FFFFFF0F><color=green>Œwietnie! Teraz oblicz kwadrat ró¿nicy drugiej wygranej.</color></mark>",
+        "<mark=#FFFFFF0F><color=green>Zgadza siê! Teraz oblicz kwadrat ró¿nicy trzeciej wygranej.</color></mark>",
+        "<mark=#FFFFFF0F><color=green>Doskonale! Oblicz kwadrat ró¿nicy czwartej wygranej.</color></mark>",
+        "<mark=#FFFFFF0F><color=green>Poprawnie! Oblicz teraz sumê tych kwadratów.</color></mark>",
+        "<mark=#FFFFFF0F><color=green>Wybornie! Oblicz wariancjê.</color></mark>",
+        "<mark=#FFFFFF0F><color=green>Kapitalnie! Na koniec oblicz odchylenie standardowe.</color></mark>",
+        "<mark=#FFFFFF0F><color=green>Uda³o ci siê! Trzymaj to w nagrodê.</color></mark>"
     };
 
-    // Sieciowe zmienne stanu
     public readonly NetworkVariable<int> CurrentStep = new(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
     );
@@ -92,7 +89,6 @@ public class AbacusManager : NetworkBehaviour
 
         ApplyRewardState(IsSolved.Value);
 
-        // Inicjalizacja UI przy do³¹czeniu
         if (noteDisplayText != null && !syncedNoteText.Value.IsEmpty)
             noteDisplayText.text = syncedNoteText.Value.ToString();
 
@@ -192,38 +188,30 @@ public class AbacusManager : NetworkBehaviour
         targetSolutions[5] = sumSquares;
         targetSolutions[6] = variance;
         targetSolutions[7] = stdDevUnderRoot;
+
+        syncedNoteText.Value = $"Aby uruchomiæ mechanizm awaryjnego zasilania, musisz zrozumieæ, jak stabilne by³y moje ma³e stawkowe eksperymenty.\n\n" +
+                                  $"Spójrz na historiê czterech identycznych turniejów z wygranymi:\n" +
+                                  $"<b>{data.a},  {data.b},  {data.c},  {data.d}</b>";
     }
 
-    // =========================================================================
-    // G£ÓWNA INTERAKCJA Z DUCHEM
-    // =========================================================================
 
     public void InteractWithGhost()
     {
-        // 1. Pierwsza interakcja: rozpoczêcie zagadki
         if (!IsRiddleStarted.Value)
         {
-            var data = prebakedPool[selectedDatasetIndex.Value];
-            syncedNoteText.Value = $"Aby uruchomiæ mechanizm awaryjnego zasilania, musisz zrozumieæ, jak stabilne by³y moje ma³e stawkowe eksperymenty.\n\n" +
-                                  $"Spójrz na historiê czterech identycznych turniejów z wygranymi:\n" +
-                                  $"<b>{data.a},  {data.b},  {data.c},  {data.d}</b>\n\n" +
-                                  $"Zacznij od obliczenia œredniej.";
-
-            syncedFeedbackText.Value = "<color=yellow>Ustaw wartoœæ œredniej na pierwszym liczydle i zg³oœ siê do mnie.</color>";
+            syncedFeedbackText.Value = introText;
 
             IsRiddleStarted.Value = true;
-            PlayAudioClientRpc(3); // DŸwiêk powitania ducha
+            PlayAudio(3);
             return;
         }
 
-        // 2. Jeœli zagadka zosta³a ju¿ w pe³ni ukoñczona
         if (CurrentStep.Value >= 8)
         {
-            syncedFeedbackText.Value = "<color=white>Zasilanie dzia³a, szuflada jest ju¿ otwarta.</color>";
+            syncedFeedbackText.Value = stepNextInstructions[7];
             return;
         }
 
-        // 3. Kolejne interakcje: sprawdzanie aktualnego liczyd³a
         CheckCurrentStepSolution();
     }
 
@@ -238,28 +226,26 @@ public class AbacusManager : NetworkBehaviour
 
         if (playerValue == expectedValue)
         {
-            // SUKCES ETAPU
-            PlayAudioClientRpc(0);
+            PlayAudio(0);
             int nextStep = step + 1;
             CurrentStep.Value = nextStep;
 
             if (nextStep < 8)
             {
-                syncedFeedbackText.Value = $"<color=green>{stepNextInstructions[step]}</color>";
+                syncedFeedbackText.Value = stepNextInstructions[step];
             }
             else
             {
                 IsSolved.Value = true;
-                syncedFeedbackText.Value = $"<color=green>{stepNextInstructions[7]}</color>";
+                syncedFeedbackText.Value = stepNextInstructions[7];
                 OnPuzzleCompleted();
             }
         }
         else
         {
-            // B£¥D ETAPU: Reset liczyd³a do 0
             currentAbacus.ResetValue();
-            PlayAudioClientRpc(1);
-            syncedFeedbackText.Value = $"<color=red>Niepoprawna wartoœæ ({playerValue}). Koraliki zosta³y zresetowane. Spróbuj ponownie.</color>";
+            PlayAudio(1);
+            syncedFeedbackText.Value = failText;
         }
     }
 
@@ -270,7 +256,6 @@ public class AbacusManager : NetworkBehaviour
 
     private void UpdateAbacusLockStates(int currentActiveStep)
     {
-        // Przed pierwsz¹ rozmow¹ z duchem wszystkie liczyd³a s¹ zablokowane
         bool allowedToPlay = IsRiddleStarted.Value && currentActiveStep < 8;
 
         for (int i = 0; i < abacuses.Length; i++)
@@ -282,11 +267,10 @@ public class AbacusManager : NetworkBehaviour
 
     private void OnPuzzleCompleted()
     {
-        PlayAudioClientRpc(2);
+        PlayAudio(2);
     }
 
-    [ClientRpc]
-    private void PlayAudioClientRpc(int soundType)
+    private void PlayAudio(int soundType)
     {
         if (audioSource == null) return;
 
