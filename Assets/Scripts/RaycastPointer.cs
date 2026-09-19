@@ -16,6 +16,8 @@ public class RaycastPointer : NetworkBehaviour
     public Transform RayOrigin => rayOrigin;
     public bool IsHoldingObject => grabbedObject != null;
 
+    private InteractableHighlight currentHoveredTarget;
+
     private readonly NetworkVariable<Vector3> networkHitPoint = new(
         writePerm: NetworkVariableWritePermission.Server,
         readPerm: NetworkVariableReadPermission.Everyone
@@ -50,9 +52,39 @@ public class RaycastPointer : NetworkBehaviour
             UpdateAimWithMouse();
             HandleGrabInput();
             PerformRaycast();
+            HandleHoverHighlight();
         }
 
         UpdateVisualLine();
+    }
+
+    private void HandleHoverHighlight()
+    {
+        Ray ray = new Ray(rayOrigin.position, rayOrigin.forward);
+        InteractableHighlight newHovered = null;
+
+        if (grabbedObject == null)
+        {
+            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, interactableLayer))
+            {
+                newHovered = hit.collider.GetComponentInParent<InteractableHighlight>();
+            }
+        }
+
+        if (newHovered != currentHoveredTarget)
+        {
+            if (currentHoveredTarget != null)
+            {
+                currentHoveredTarget.SetHighlight(false);
+            }
+
+            if (newHovered != null)
+            {
+                newHovered.SetHighlight(true);
+            }
+
+            currentHoveredTarget = newHovered;
+        }
     }
 
     private void UpdateAimWithMouse()
