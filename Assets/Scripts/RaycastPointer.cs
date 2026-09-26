@@ -10,8 +10,13 @@ public class RaycastPointer : NetworkBehaviour
     [SerializeField] private Transform rayOrigin;
     [SerializeField] private float mouseSensitivity = 0.1f;
 
+    [SerializeField] private float scrollSpeed = 3.0f;
+    [SerializeField] private float minGrabDistance = 0.5f;
+    [SerializeField] private float maxGrabDistance = 15.0f;
+
     private LineRenderer lineRenderer;
     private GrabbableObject grabbedObject = null;
+    private float currentHoldDistance;
 
     public Transform RayOrigin => rayOrigin;
     public bool IsHoldingObject => grabbedObject != null;
@@ -53,6 +58,7 @@ public class RaycastPointer : NetworkBehaviour
             HandleGrabInput();
             PerformRaycast();
             HandleHoverHighlight();
+            HandleDistanceAdjustment();
         }
 
         UpdateVisualLine();
@@ -126,6 +132,7 @@ public class RaycastPointer : NetworkBehaviour
                 if (hit.collider.TryGetComponent<GrabbableObject>(out var targetObject))
                 {
                     grabbedObject = targetObject;
+                    currentHoldDistance = hit.distance;
                     grabbedObject.Grab(rayOrigin, hit.distance);
                 }
                 else if (hit.collider.TryGetComponent<IInteractable>(out var interactable))
@@ -133,6 +140,33 @@ public class RaycastPointer : NetworkBehaviour
                     interactable.Interact(this, hit);
                 }
             }
+        }
+    }
+
+    private void HandleDistanceAdjustment()
+    {
+        if (grabbedObject == null) return;
+
+        float verticalInput = 0f;
+
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.upArrowKey.isPressed)
+            {
+                verticalInput += 1f; // Oddalanie (w przód)
+            }
+            if (Keyboard.current.downArrowKey.isPressed)
+            {
+                verticalInput -= 1f; // Przybli¿anie (do gracza)
+            }
+        }
+
+        if (Mathf.Abs(verticalInput) > 0.01f)
+        {
+            currentHoldDistance += verticalInput * scrollSpeed * Time.deltaTime;
+            currentHoldDistance = Mathf.Clamp(currentHoldDistance, minGrabDistance, maxGrabDistance);
+
+            grabbedObject.UpdateHoldDistance(currentHoldDistance);
         }
     }
 
@@ -162,8 +196,12 @@ public class RaycastPointer : NetworkBehaviour
         UpdateVisualLine();
     }
 
-    public void ForceGrab(GrabbableObject obj)
+    public void ForceGrab(GrabbableObject obj, float distance)
     {
+        if (obj == null) return;
+
         grabbedObject = obj;
+        currentHoldDistance = distance;
+        grabbedObject.Grab(rayOrigin, currentHoldDistance);
     }
 }

@@ -115,6 +115,13 @@ public class GrabbableObject : NetworkBehaviour, IInteractable
         rb.isKinematic = true;
     }
 
+    public void UpdateHoldDistance(float newDistance)
+    {
+        if (!IsServer) return;
+
+        grabDistance = newDistance;
+    }
+
     public void Drop()
     {
         if (!IsServer) return;

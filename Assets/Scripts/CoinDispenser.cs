@@ -24,8 +24,7 @@ public class CoinDispenser : NetworkBehaviour, IInteractable
 
         if (newCoin.TryGetComponent<GrabbableObject>(out var grabbable))
         {
-            grabbable.Grab(pointer.RayOrigin, hit.distance);
-            pointer.ForceGrab(grabbable);
+            pointer.ForceGrab(grabbable, hit.distance);
         }
     }
 }
