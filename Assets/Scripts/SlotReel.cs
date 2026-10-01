@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class SlotReel : NetworkBehaviour
 {
-    [SerializeField] private Vector3 localRotationAxis = Vector3.right;
-
     [SerializeField] private TMP_Text[] faceTexts = new TMP_Text[4];
 
     private int[] reelNumbers = new int[4];
+
+    private Vector3 localRotationAxis = Vector3.back;
 
     public readonly NetworkVariable<int> CurrentIndex = new(
         0,
