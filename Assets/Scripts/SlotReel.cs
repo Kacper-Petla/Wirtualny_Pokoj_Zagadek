@@ -62,7 +62,7 @@ public class SlotReel : NetworkBehaviour
 
     private void ApplyRotation(int index)
     {
-        float targetAngle = index * 90f;
+        float targetAngle = index * -90f;
         transform.localRotation = Quaternion.AngleAxis(targetAngle, localRotationAxis);
     }
 }

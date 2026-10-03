@@ -4,8 +4,8 @@ public class SlotReelButton : MonoBehaviour, IInteractable
 {
     public enum StepDirection
     {
-        Up = -1,
-        Down = 1
+        Up = 1,
+        Down = -1
     }
 
     [SerializeField] private SlotReel targetReel;
@@ -15,6 +15,8 @@ public class SlotReelButton : MonoBehaviour, IInteractable
     {
         if (targetReel == null) return;
 
-        targetReel.RotateStep((int)direction);
+        int inverted = -(int)direction;
+
+        targetReel.RotateStep(inverted);
     }
 }
