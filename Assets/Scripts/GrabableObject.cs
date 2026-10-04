@@ -1,10 +1,14 @@
 using Unity.Netcode;
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(NetworkObject))]
 public class GrabbableObject : NetworkBehaviour, IInteractable
 {
+    public event Action OnGrabbed;
+    public event Action OnDropped;
+
     public enum BoundaryAction
     {
         None,
@@ -22,6 +26,7 @@ public class GrabbableObject : NetworkBehaviour, IInteractable
     private float grabDistance;
     private Quaternion initialRotationOffset;
     private bool isGrabbed = false;
+    private bool isResettable = true;
 
     private Vector3 initialPosition;
     private Quaternion initialRotation;
@@ -113,6 +118,8 @@ public class GrabbableObject : NetworkBehaviour, IInteractable
 
         initialRotationOffset = Quaternion.Inverse(pointer.rotation) * transform.rotation;
         rb.isKinematic = true;
+
+        OnGrabbed?.Invoke();
     }
 
     public void UpdateHoldDistance(float newDistance)
@@ -129,6 +136,8 @@ public class GrabbableObject : NetworkBehaviour, IInteractable
         isGrabbed = false;
         pointerTransform = null;
         rb.isKinematic = false;
+
+        OnDropped?.Invoke();
     }
 
     // Wizualizacja zasiêgu w edytorze Unity
@@ -139,5 +148,18 @@ public class GrabbableObject : NetworkBehaviour, IInteractable
         Gizmos.color = Color.yellow;
         Vector3 center = Application.isPlaying ? initialPosition : transform.position;
         Gizmos.DrawWireSphere(center, maxDistanceFromSpawn);
+    }
+
+    public bool IsResettable
+    {
+        get => isResettable;
+        set => isResettable = value;
+    }
+
+    public void ResetToOrigin()
+    {
+        if (!IsServer) return;
+
+        if (isResettable) HandleBoundaryExceeded();
     }
 }
