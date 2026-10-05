@@ -6,7 +6,7 @@ using UnityEngine;
 namespace ithappy.Casino
 {
     [DisallowMultipleComponent]
-    public sealed class PresetUVSlotMachine : MonoBehaviour
+    public sealed class PresetUVSlotMachine : MonoBehaviour, IInteractable
     {
         private const int ReelCount = 4;
 
@@ -127,6 +127,14 @@ namespace ithappy.Casino
         private int loseHash;
 
         public bool IsSpinning => isSpinning;
+
+        public void Interact()
+        {
+            if (!autoPlay && !isSpinning)
+            {
+                SpinRandom();
+            }
+        }
 
         private void Awake()
         {
