@@ -12,29 +12,29 @@ public class DiceManager : NetworkBehaviour
     private const int CombinationsCount = 10;
 
     [SerializeField] private TMP_Text riddleDisplay;
-    [SerializeField] private DiceNote diceNote;
+    [SerializeField] private TMP_Text noteTextDisplay;
+    [SerializeField] private GameObject notePanelRoot;
     [SerializeField] private DiceController[] activeDice;
 
 
-    private string introDialogue = $"<mark=#1E1E1Eff><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am na kartce {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.</color></mark>";
+    private string introDialogue = $"<mark=#1E1E1Eff><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am w notatniku {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.</color></mark>";
     private string successDialogue = "<mark=#1E1E1Eff><color=green>Niewiarygodne! To dok³adnie ta liczba. Trzymaj to w nagrodê.</color></mark>";
     private string failDialogue = "<mark=#1E1E1Eff><color=red>Coœ siê nie zgadza... Suma u³o¿onych koœci to nie dominanta z moich zapisków.</color></mark>";
     private string alreadySolvedDialogue = "<mark=#1E1E1Eff><color=white>Dziêkujê za pomoc, zagadka zosta³a ju¿ rozwi¹zana.</color></mark>";
 
-    [Header("Synchronized State")]
     private readonly NetworkVariable<int> targetModeSum = new(
         -1,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
-    public readonly NetworkVariable<bool> IsSolved = new(
+    private readonly NetworkVariable<bool> IsSolved = new(
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
-    public readonly NetworkVariable<bool> Explained = new(
+    private readonly NetworkVariable<bool> Explained = new(
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
@@ -46,9 +46,25 @@ public class DiceManager : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    private readonly NetworkVariable<FixedString512Bytes> syncedCombinations = new(
+        string.Empty,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    private readonly NetworkVariable<bool> isNoteVisible = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     public override void OnNetworkSpawn()
     {
+        syncedCombinations.OnValueChanged += (oldVal, newVal) => RefreshDisplay();
+        isNoteVisible.OnValueChanged += (oldVal, newVal) => SetVisibility(newVal);
         syncedDialogue.OnValueChanged += OnDialogueChanged;
+
+        SetVisibility(isNoteVisible.Value);
 
         if (!syncedDialogue.Value.IsEmpty && riddleDisplay != null)
         {
@@ -57,7 +73,10 @@ public class DiceManager : NetworkBehaviour
 
         if (IsServer)
         {
-            GeneratePuzzleData();
+            if (targetModeSum.Value == -1)
+            {
+                GeneratePuzzleData();
+            }
         }
     }
 
@@ -85,6 +104,11 @@ public class DiceManager : NetworkBehaviour
         }
 
         VerifyDicePlacement();
+    }
+
+    public void DisplayNote()
+    {
+        isNoteVisible.Value = !isNoteVisible.Value;
     }
 
     private void GeneratePuzzleData()
@@ -143,10 +167,8 @@ public class DiceManager : NetworkBehaviour
             sb.AppendLine($"{i + 1}.\t({d1} + {d2})");
         }
 
-        if (diceNote != null)
-        {
-            diceNote.SetCombinations(sb.ToString());
-        }
+        syncedCombinations.Value = sb.ToString();
+        RefreshDisplay();
 
         Debug.Log($"[GhostPuzzle] Wygenerowano deterministyczn¹ dominantê: {modeValue} (wystêpuje {modeFrequency} razy)");
     }
@@ -160,6 +182,26 @@ public class DiceManager : NetworkBehaviour
         int d2 = sum - d1;
 
         return (d1, d2);
+    }
+
+    private void SetVisibility(bool visible)
+    {
+        if (notePanelRoot != null)
+        {
+            notePanelRoot.SetActive(visible);
+        }
+        else if (noteTextDisplay != null)
+        {
+            noteTextDisplay.gameObject.SetActive(visible);
+        }
+    }
+
+    private void RefreshDisplay()
+    {
+        if (noteTextDisplay != null && !syncedCombinations.Value.IsEmpty)
+        {
+            noteTextDisplay.text = syncedCombinations.Value.ToString();
+        }
     }
 
     private void VerifyDicePlacement()
@@ -185,6 +227,7 @@ public class DiceManager : NetworkBehaviour
         else
         {
             syncedDialogue.Value = failDialogue;
+            Explained.Value = false;
         }
     }
 }
