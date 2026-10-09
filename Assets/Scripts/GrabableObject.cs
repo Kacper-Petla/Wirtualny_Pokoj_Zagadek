@@ -83,8 +83,11 @@ public class GrabbableObject : NetworkBehaviour, IInteractable
 
         if (boundaryAction == BoundaryAction.Reset)
         {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            if (rb != null && !rb.isKinematic)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
 
             transform.position = initialPosition;
             transform.rotation = initialRotation;

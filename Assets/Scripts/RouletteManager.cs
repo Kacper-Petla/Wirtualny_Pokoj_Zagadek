@@ -12,6 +12,13 @@ public class RouletteManager : NetworkBehaviour
     [SerializeField] private TMP_Text riddleDisplay;
     [SerializeField] private TMP_Text numbersDisplay;
 
+    [SerializeField] private PuzzlePiece scenePuzzlePiece;
+    [SerializeField] private Transform rouletteLidTransform;
+
+    private float openHeightOffset = 1.5f; 
+    private float openXOffset = 2.0f;
+    private Vector3 openRotationEuler = new Vector3(90f, 0f, 0f);
+
     private string riddleText = $"<mark=#1E1E1Eff><color=white>Maszyna zaciê³a siê. Za ka¿dym razem wypada mediana z ostatnich {NumberCount} losowañ.</color></mark>";
     private string winMessage = "<mark=#1E1E1Eff><color=green>W³aœciwe pole obstawione.</color></mark>";
     private string loseMessage = "<mark=#1E1E1Eff><color=red>B³êdne pole obstawione.</color></mark>";
@@ -41,10 +48,30 @@ public class RouletteManager : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    private Vector3 initialLidPosition;
+    private Quaternion initialLidRotation;
+    private Vector3 targetLidPosition;
+    private Quaternion targetLidRotation;
+
+    private void Awake()
+    {
+        if (rouletteLidTransform != null)
+        {
+            initialLidPosition = rouletteLidTransform.localPosition;
+            initialLidRotation = rouletteLidTransform.localRotation;
+
+            targetLidPosition = initialLidPosition + Vector3.forward * openXOffset + Vector3.up * openHeightOffset;
+            targetLidRotation = initialLidRotation * Quaternion.Euler(openRotationEuler);
+        }
+    }
+
     public override void OnNetworkSpawn()
     {
         syncedNumbersText.OnValueChanged += OnNumbersChanged;
         syncedRiddleText.OnValueChanged += OnRiddleTextChanged;
+        IsSolved.OnValueChanged += OnSolvedChanged;
+
+        ApplyRewardState(IsSolved.Value);
 
         if (!syncedNumbersText.Value.IsEmpty && numbersDisplay != null)
         {
@@ -54,6 +81,12 @@ public class RouletteManager : NetworkBehaviour
         if (!syncedRiddleText.Value.IsEmpty && riddleDisplay != null)
         {
             riddleDisplay.text = syncedRiddleText.Value.ToString();
+        }
+
+        if (IsSolved.Value && rouletteLidTransform != null)
+        {
+            rouletteLidTransform.localPosition = targetLidPosition;
+            rouletteLidTransform.localRotation = targetLidRotation;
         }
 
         if (IsServer)
@@ -67,6 +100,7 @@ public class RouletteManager : NetworkBehaviour
     {
         syncedNumbersText.OnValueChanged -= OnNumbersChanged;
         syncedRiddleText.OnValueChanged -= OnRiddleTextChanged;
+        IsSolved.OnValueChanged -= OnSolvedChanged;
     }
 
     public void DisplayRiddle()
@@ -87,6 +121,37 @@ public class RouletteManager : NetworkBehaviour
         if (riddleDisplay != null && !newVal.IsEmpty)
         {
             riddleDisplay.text = newVal.ToString();
+        }
+    }
+
+    private void OnSolvedChanged(bool oldVal, bool newVal)
+    {
+        if (newVal && rouletteLidTransform != null)
+        {
+            rouletteLidTransform.localPosition = targetLidPosition;
+            rouletteLidTransform.localRotation = targetLidRotation;
+        }
+        ApplyRewardState(newVal);
+    }
+
+    private void ApplyRewardState(bool revealed)
+    {
+        if (scenePuzzlePiece == null) return;
+
+        var renderers = scenePuzzlePiece.GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers) r.enabled = revealed;
+
+        var colliders = scenePuzzlePiece.GetComponentsInChildren<Collider>(true);
+        foreach (var c in colliders) c.enabled = revealed;
+
+        if (scenePuzzlePiece.TryGetComponent<GrabbableObject>(out var grabbable))
+        {
+            grabbable.enabled = revealed;
+        }
+
+        if (scenePuzzlePiece.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = !revealed;
         }
     }
 

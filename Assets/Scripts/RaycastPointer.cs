@@ -59,6 +59,11 @@ public class RaycastPointer : NetworkBehaviour
             PerformRaycast();
             HandleHoverHighlight();
             HandleDistanceAdjustment();
+
+            if (grabbedObject != null && !grabbedObject.IsGrabbed)
+            {
+                grabbedObject = null;
+            }
         }
 
         UpdateVisualLine();
