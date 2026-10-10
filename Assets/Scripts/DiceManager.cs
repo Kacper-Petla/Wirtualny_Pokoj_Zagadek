@@ -16,6 +16,8 @@ public class DiceManager : NetworkBehaviour
     [SerializeField] private GameObject notePanelRoot;
     [SerializeField] private DiceController[] activeDice;
 
+    [SerializeField] private PuzzlePiece scenePuzzlePiece;
+
 
     private string introDialogue = $"<mark=#1E1E1Eff><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am w notatniku {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.</color></mark>";
     private string successDialogue = "<mark=#1E1E1Eff><color=green>Niewiarygodne! To dok³adnie ta liczba. Trzymaj to w nagrodê.</color></mark>";
@@ -63,6 +65,9 @@ public class DiceManager : NetworkBehaviour
         syncedCombinations.OnValueChanged += (oldVal, newVal) => RefreshDisplay();
         isNoteVisible.OnValueChanged += (oldVal, newVal) => SetVisibility(newVal);
         syncedDialogue.OnValueChanged += OnDialogueChanged;
+        IsSolved.OnValueChanged += OnSolvedChanged;
+
+        ApplyRewardState(IsSolved.Value);
 
         SetVisibility(isNoteVisible.Value);
 
@@ -80,11 +85,45 @@ public class DiceManager : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkDespawn()
+    {
+        syncedCombinations.OnValueChanged -= (oldVal, newVal) => RefreshDisplay();
+        isNoteVisible.OnValueChanged -= (oldVal, newVal) => SetVisibility(newVal);
+        syncedDialogue.OnValueChanged -= OnDialogueChanged;
+        IsSolved.OnValueChanged -= OnSolvedChanged;
+    }
+
     private void OnDialogueChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
     {
         if (riddleDisplay != null && !newVal.IsEmpty)
         {
             riddleDisplay.text = newVal.Value.ToString();
+        }
+    }
+
+    private void OnSolvedChanged(bool oldVal, bool newVal)
+    {
+        ApplyRewardState(newVal);
+    }
+
+    private void ApplyRewardState(bool revealed)
+    {
+        if (scenePuzzlePiece == null) return;
+
+        var renderers = scenePuzzlePiece.GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers) r.enabled = revealed;
+
+        var colliders = scenePuzzlePiece.GetComponentsInChildren<Collider>(true);
+        foreach (var c in colliders) c.enabled = revealed;
+
+        if (scenePuzzlePiece.TryGetComponent<GrabbableObject>(out var grabbable))
+        {
+            grabbable.enabled = revealed;
+        }
+
+        if (scenePuzzlePiece.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = !revealed;
         }
     }
 
