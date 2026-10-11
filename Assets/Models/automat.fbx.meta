@@ -3,7 +3,37 @@ guid: 6388e62ed5466e94584a86cbf9befac0
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Beben
+    second: {fileID: 2100000, guid: 496067eb73e8b1845b8e4333e0e4e876, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Dzwignia1
+    second: {fileID: 2100000, guid: b8c44532476b907418d9b9cb4eb46f64, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Dzwignia2
+    second: {fileID: 2100000, guid: ed2b7c8e838ade14eb77f756d980cc79, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Obudowa
+    second: {fileID: 2100000, guid: da3e0314e56ffe84b8303d8cdaa8f186, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Strzalki
+    second: {fileID: 2100000, guid: eef5ca034b9451a43bb01c509a7a5a31, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Tabliczka
+    second: {fileID: 2100000, guid: ebac71b9050fb4b458c0f5a55221c30b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -97,7 +127,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 1
+    globalScale: 100
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0

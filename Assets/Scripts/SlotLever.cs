@@ -4,7 +4,19 @@ using UnityEngine;
 
 public class SlotLever : NetworkBehaviour, IInteractable
 {
-    [SerializeField] private SlotMachineManager machineManager;
+    [SerializeField] private SlotManager slotManager;
+    [SerializeField] private int machineIndex;
+
+    private readonly NetworkVariable<bool> isUnlocked = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public void SetUnlocked(bool unlocked)
+    {
+        if (IsServer) isUnlocked.Value = unlocked;
+    }
 
     public void Interact()
     {
@@ -13,9 +25,9 @@ public class SlotLever : NetworkBehaviour, IInteractable
 
     private void PullLever()
     {
-        if (machineManager != null)
+        if (isUnlocked.Value && slotManager != null)
         {
-            machineManager.CheckSolution();
+            slotManager.CheckSolution(machineIndex);
         }
     }
 }
