@@ -62,8 +62,8 @@ public class DiceManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        syncedCombinations.OnValueChanged += (oldVal, newVal) => RefreshDisplay();
-        isNoteVisible.OnValueChanged += (oldVal, newVal) => SetVisibility(newVal);
+        syncedCombinations.OnValueChanged += OnCombinationChanged;
+        isNoteVisible.OnValueChanged += OnNoteVisibilityChanged;
         syncedDialogue.OnValueChanged += OnDialogueChanged;
         IsSolved.OnValueChanged += OnSolvedChanged;
 
@@ -87,10 +87,20 @@ public class DiceManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        syncedCombinations.OnValueChanged -= (oldVal, newVal) => RefreshDisplay();
-        isNoteVisible.OnValueChanged -= (oldVal, newVal) => SetVisibility(newVal);
+        syncedCombinations.OnValueChanged -= OnCombinationChanged;
+        isNoteVisible.OnValueChanged -= OnNoteVisibilityChanged;
         syncedDialogue.OnValueChanged -= OnDialogueChanged;
         IsSolved.OnValueChanged -= OnSolvedChanged;
+    }
+
+    private void OnCombinationChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
+    {
+        RefreshDisplay();
+    }
+
+    private void OnNoteVisibilityChanged(bool oldVal, bool newVal)
+    {
+        SetVisibility(newVal);
     }
 
     private void OnDialogueChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)

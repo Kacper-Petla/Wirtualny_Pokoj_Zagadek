@@ -19,7 +19,10 @@ public class SlotManager : NetworkBehaviour
     [SerializeField] private TMP_Text ghostDialogueDisplay;
     [SerializeField] private TMP_Text board1Display;     // 5 liczb do średniej arytmetycznej
     [SerializeField] private TMP_Text board2Display;     // Wartości wygranych kombinacji
+
+    [SerializeField] private GameObject wallNoteRoot;
     [SerializeField] private TMP_Text noteTextDisplay;   // Kartka z częstościami z 1. automatu
+
 
     [Header("Machines & Levers")]
     [SerializeField] private SlotMachine machine1;
@@ -29,9 +32,9 @@ public class SlotManager : NetworkBehaviour
 
     [Header("Rewards (Scene Objects)")]
     [Tooltip("Kartka wypadająca z 1. automatu")]
-    [SerializeField] private GrabbableObject rewardNote;
+    [SerializeField] private GameObject rewardNote;
     [Tooltip("Klucz wypadający z 2. automatu")]
-    [SerializeField] private GrabbableObject rewardKey;
+    [SerializeField] private GameObject rewardKey;
 
     public readonly NetworkVariable<PuzzleStage> CurrentStage = new(
         PuzzleStage.WaitingForGhost,
@@ -52,18 +55,34 @@ public class SlotManager : NetworkBehaviour
         string.Empty, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
     );
 
+    private readonly NetworkVariable<bool> isNotePinnedToWall = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     private int[] targetCode1 = new int[3];
     private int[] targetCode2 = new int[3];
 
+    private string introDialogue1 = "<mark=#1E1E1Eff><color=white>Zauważyłem, że ten automat jest tak ustawiony, że jackpot to średnia z ostatnich 5 wygranych.</color></mark>";
+    private string riddleDialogue1 = "<mark=#1E1E1Eff><color=white>Zauważyłem, że ten automat jest tak ustawiony, że jackpot to średnia z ostatnich 5 wygranych.</color></mark>";
+    private string introDialogue2 = "<mark=#1E1E1Eff><color=green>Wszędzie szukałem tej kartki, spisałem na niej, ile razy wypadła dana kombinacja na automacie po drugiej stronie, gdyż posiada podobną wadę, że jackpot to średnia wygranych, ale z całego dnia.</color></mark>";
+    private string riddleDialogue2 = "<mark=#1E1E1Eff><color=white>Użyj mnożników z kartki i wygranych z tabliczki, by obliczyć średnią ważoną na drugim automacie.</color></mark>";
+    private string successDialogue = "<mark=#1E1E1Eff><color=green>Niewiarygodne! To klucz do drzwi wyjściowych.</color></mark>";
+    private string failDialogue = "<mark=#1E1E1Eff><color=red>To chyba nie jest poprawna liczba.</color></mark>";
+    private string alreadySolvedDialogue = "<mark=#1E1E1Eff><color=white>Dziękuję za pomoc, zagadka została już rozwiązana.</color></mark>";
+
     public override void OnNetworkSpawn()
     {
-        syncedGhostText.OnValueChanged += (o, n) => { if (ghostDialogueDisplay != null) ghostDialogueDisplay.text = n.ToString(); };
-        syncedBoard1Text.OnValueChanged += (o, n) => { if (board1Display != null) board1Display.text = n.ToString(); };
-        syncedBoard2Text.OnValueChanged += (o, n) => { if (board2Display != null) board2Display.text = n.ToString(); };
-        syncedNoteText.OnValueChanged += (o, n) => { if (noteTextDisplay != null) noteTextDisplay.text = n.ToString(); };
+        syncedGhostText.OnValueChanged += OnGhostTextChanged;
+        syncedBoard1Text.OnValueChanged += OnBoard1TextChanged;
+        syncedBoard2Text.OnValueChanged += OnBoard2TextChanged;
+        syncedNoteText.OnValueChanged += OnNoteTextChanged;
         CurrentStage.OnValueChanged += OnStageChanged;
+        isNotePinnedToWall.OnValueChanged += OnNotePinnedChanged;
 
         ApplyStageVisuals(CurrentStage.Value);
+        ApplyNoteWallState(isNotePinnedToWall.Value);
 
         if (IsServer && CurrentStage.Value == PuzzleStage.WaitingForGhost)
         {
@@ -71,18 +90,81 @@ public class SlotManager : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkDespawn()
+    {
+        syncedGhostText.OnValueChanged -= OnGhostTextChanged;
+        syncedBoard1Text.OnValueChanged -= OnBoard1TextChanged;
+        syncedBoard2Text.OnValueChanged -= OnBoard2TextChanged;
+        syncedNoteText.OnValueChanged -= OnNoteTextChanged;
+        CurrentStage.OnValueChanged -= OnStageChanged;
+        isNotePinnedToWall.OnValueChanged -= OnNotePinnedChanged;
+    }
+
+    private void OnGhostTextChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
+    {
+        if (ghostDialogueDisplay != null) ghostDialogueDisplay.text = newVal.ToString();
+    }
+
+    private void OnBoard1TextChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
+    {
+        if (board1Display != null) board1Display.text = newVal.ToString();
+    }
+
+    private void OnBoard2TextChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
+    {
+        if (board2Display != null) board2Display.text = newVal.ToString();
+    }
+
+    private void OnNoteTextChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
+    {
+        if (noteTextDisplay != null) noteTextDisplay.text = newVal.ToString();
+    }
+
     private void OnStageChanged(PuzzleStage oldStage, PuzzleStage newStage)
     {
         ApplyStageVisuals(newStage);
     }
 
+    private void OnNotePinnedChanged(bool oldVal, bool newVal)
+    {
+        ApplyNoteWallState(newVal);
+    }
+
     private void ApplyStageVisuals(PuzzleStage stage)
     {
-        SetItemActive(rewardNote, stage >= PuzzleStage.Machine2_Active);
+        bool showPhysicalNote = (stage == PuzzleStage.Machine2_Active) && !isNotePinnedToWall.Value;
+        SetItemActive(rewardNote, showPhysicalNote);
+
         SetItemActive(rewardKey, stage == PuzzleStage.Completed);
     }
 
-    private void SetItemActive(GrabbableObject item, bool active)
+    public void PinNoteToWall()
+    {
+        if (!IsServer || isNotePinnedToWall.Value) return;
+
+        isNotePinnedToWall.Value = true;
+        syncedGhostText.Value = "<mark=#1E1E1Eff><color=white>Zapiski z automatu trafiły na ścianę! Teraz oblicz średnią ważoną.</color></mark>";
+    }
+
+    private void ApplyNoteWallState(bool pinned)
+    {
+        if (wallNoteRoot != null)
+        {
+            wallNoteRoot.SetActive(pinned);
+        }
+
+        if (noteTextDisplay != null)
+        {
+            noteTextDisplay.gameObject.SetActive(pinned);
+        }
+
+        if (pinned)
+        {
+            SetItemActive(rewardNote, false);
+        }
+    }
+
+    private void SetItemActive(GameObject item, bool active)
     {
         if (item == null) return;
         var renderers = item.GetComponentsInChildren<Renderer>(true);
@@ -91,7 +173,10 @@ public class SlotManager : NetworkBehaviour
         var colliders = item.GetComponentsInChildren<Collider>(true);
         foreach (var c in colliders) c.enabled = active;
 
-        item.enabled = active;
+        if (item.TryGetComponent<GrabbableObject>(out var grabbable))
+        {
+            grabbable.enabled = active;
+        }
 
         if (IsServer && item.TryGetComponent<Rigidbody>(out var rb))
         {
@@ -99,6 +184,7 @@ public class SlotManager : NetworkBehaviour
             rb.useGravity = active;
         }
     }
+   
 
     public void InteractGhost()
     {
@@ -106,19 +192,19 @@ public class SlotManager : NetworkBehaviour
         {
             CurrentStage.Value = PuzzleStage.Machine1_Active;
             lever1.SetUnlocked(true);
-            syncedGhostText.Value = "<mark=#1E1E1Eff><color=white>Oblicz średnią arytmetyczną z 5 liczb na tabliczce i ustaw ją na pierwszym automacie [XX,X]. Pociągnij za dźwignię!</color></mark>";
+            syncedGhostText.Value = introDialogue1;
         }
         else if (CurrentStage.Value == PuzzleStage.Machine1_Active)
         {
-            syncedGhostText.Value = "<mark=#1E1E1Eff><color=white>Ustaw na bębnach średnią arytmetyczną z tabliczki i pociągnij za dźwignię.</color></mark>";
+            syncedGhostText.Value = riddleDialogue1;
         }
         else if (CurrentStage.Value == PuzzleStage.Machine2_Active)
         {
-            syncedGhostText.Value = "<mark=#1E1E1Eff><color=white>Użyj mnożników z kartki i wygranych z tabliczki, by obliczyć średnią ważoną na drugim automacie!</color></mark>";
+            syncedGhostText.Value = riddleDialogue2;
         }
         else
         {
-            syncedGhostText.Value = "<mark=#1E1E1Eff><color=green>Świetna robota! Klucz do drzwi został wydany.</color></mark>";
+            syncedGhostText.Value = alreadySolvedDialogue;
         }
     }
 
@@ -133,11 +219,11 @@ public class SlotManager : NetworkBehaviour
                 CurrentStage.Value = PuzzleStage.Machine2_Active;
                 lever1.SetUnlocked(false);
                 lever2.SetUnlocked(true);
-                syncedGhostText.Value = "<mark=#1E1E1Eff><color=green>Brawo! Pierwszy automat wydał kartkę. Oblicz teraz średnią ważoną dla drugiego automatu.</color></mark>";
+                syncedGhostText.Value = introDialogue2;
             }
             else
             {
-                syncedGhostText.Value = "<mark=#1E1E1Eff><color=red>Zła kombinacja na pierwszym automacie. Przelicz średnią ponownie.</color></mark>";
+                syncedGhostText.Value = failDialogue;
             }
         }
         else if (machineIndex == 1 && CurrentStage.Value == PuzzleStage.Machine2_Active)
@@ -146,11 +232,11 @@ public class SlotManager : NetworkBehaviour
             {
                 CurrentStage.Value = PuzzleStage.Completed;
                 lever2.SetUnlocked(false);
-                syncedGhostText.Value = "<mark=#1E1E1Eff><color=green>Doskonale! Drugi automat wydał klucz do drzwi!</color></mark>";
+                syncedGhostText.Value = successDialogue;
             }
             else
             {
-                syncedGhostText.Value = "<mark=#1E1E1Eff><color=red>Błędna średnia ważona. Sprawdź zapiski na kartce i tabliczkę.</color></mark>";
+                syncedGhostText.Value = failDialogue;
             }
         }
     }
