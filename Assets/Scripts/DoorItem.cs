@@ -1,11 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class PuzzlePiece : NetworkBehaviour
+public class DoorItem : NetworkBehaviour
 {
-    [SerializeField] private int pieceId;
+    [SerializeField] private int itemId;
 
-    public int PieceId => pieceId;
+    public int SlotId => itemId;
 
     public readonly NetworkVariable<bool> IsPlaced = new(
         false,

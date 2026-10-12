@@ -17,11 +17,11 @@ public class SlotManager : NetworkBehaviour
 
     [Header("Displays")]
     [SerializeField] private TMP_Text ghostDialogueDisplay;
-    [SerializeField] private TMP_Text board1Display;     // 5 liczb do średniej arytmetycznej
-    [SerializeField] private TMP_Text board2Display;     // Wartości wygranych kombinacji
+    [SerializeField] private TMP_Text board1Display;
+    [SerializeField] private TMP_Text board2Display;
 
     [SerializeField] private GameObject wallNoteRoot;
-    [SerializeField] private TMP_Text noteTextDisplay;   // Kartka z częstościami z 1. automatu
+    [SerializeField] private TMP_Text noteTextDisplay;
 
 
     [Header("Machines & Levers")]
@@ -31,9 +31,7 @@ public class SlotManager : NetworkBehaviour
     [SerializeField] private SlotLever lever2;
 
     [Header("Rewards (Scene Objects)")]
-    [Tooltip("Kartka wypadająca z 1. automatu")]
     [SerializeField] private GameObject rewardNote;
-    [Tooltip("Klucz wypadający z 2. automatu")]
     [SerializeField] private GameObject rewardKey;
 
     public readonly NetworkVariable<PuzzleStage> CurrentStage = new(
@@ -64,13 +62,14 @@ public class SlotManager : NetworkBehaviour
     private int[] targetCode1 = new int[3];
     private int[] targetCode2 = new int[3];
 
-    private string introDialogue1 = "<mark=#1E1E1Eff><color=white>Zauważyłem, że ten automat jest tak ustawiony, że jackpot to średnia z ostatnich 5 wygranych.</color></mark>";
-    private string riddleDialogue1 = "<mark=#1E1E1Eff><color=white>Zauważyłem, że ten automat jest tak ustawiony, że jackpot to średnia z ostatnich 5 wygranych.</color></mark>";
-    private string introDialogue2 = "<mark=#1E1E1Eff><color=green>Wszędzie szukałem tej kartki, spisałem na niej, ile razy wypadła dana kombinacja na automacie po drugiej stronie, gdyż posiada podobną wadę, że jackpot to średnia wygranych, ale z całego dnia.</color></mark>";
-    private string riddleDialogue2 = "<mark=#1E1E1Eff><color=white>Użyj mnożników z kartki i wygranych z tabliczki, by obliczyć średnią ważoną na drugim automacie.</color></mark>";
-    private string successDialogue = "<mark=#1E1E1Eff><color=green>Niewiarygodne! To klucz do drzwi wyjściowych.</color></mark>";
-    private string failDialogue = "<mark=#1E1E1Eff><color=red>To chyba nie jest poprawna liczba.</color></mark>";
-    private string alreadySolvedDialogue = "<mark=#1E1E1Eff><color=white>Dziękuję za pomoc, zagadka została już rozwiązana.</color></mark>";
+    private string introDialogue1 = "<mark=#FFFFFF0F><color=white>Zauważyłem, że ten automat jest tak ustawiony, że jackpot to średnia z ostatnich 5 wygranych.</color></mark>";
+    private string riddleDialogue1 = "<mark=#FFFFFF0F><color=white>Zauważyłem, że ten automat jest tak ustawiony, że jackpot to średnia z ostatnich 5 wygranych.</color></mark>";
+    private string introDialogue2 = "<mark=#FFFFFF0F><color=green>Wszędzie szukałem tej kartki, spisałem na niej, ile razy wypadła dana kombinacja na automacie po drugiej stronie, gdyż posiada podobną wadę, że jackpot to średnia wygranych, ale z całego dnia.</color></mark>";
+    private string riddleDialogue2 = "<mark=#FFFFFF0F><color=white>Użyj mnożników z kartki i wygranych z tabliczki, by obliczyć średnią ważoną na drugim automacie.</color></mark>";
+    private string successDialogue = "<mark=#FFFFFF0F><color=green>Niewiarygodne! To klucz do drzwi wyjściowych.</color></mark>";
+    private string failDialogue = "<mark=#FFFFFF0F><color=red>To chyba nie jest poprawna liczba.</color></mark>";
+    private string alreadySolvedDialogue = "<mark=#FFFFFF0F><color=white>Dziękuję za pomoc, zagadka została już rozwiązana.</color></mark>";
+    private string pickupDialogue = "<mark=#FFFFFF0F><color=white>Zapiski z automatu trafiły na ścianę! Teraz oblicz średnią ważoną.</color></mark>";
 
     public override void OnNetworkSpawn()
     {
@@ -143,7 +142,7 @@ public class SlotManager : NetworkBehaviour
         if (!IsServer || isNotePinnedToWall.Value) return;
 
         isNotePinnedToWall.Value = true;
-        syncedGhostText.Value = "<mark=#1E1E1Eff><color=white>Zapiski z automatu trafiły na ścianę! Teraz oblicz średnią ważoną.</color></mark>";
+        syncedGhostText.Value = pickupDialogue;
     }
 
     private void ApplyNoteWallState(bool pinned)
@@ -259,7 +258,7 @@ public class SlotManager : NetworkBehaviour
         vals[0] -= 4; vals[1] += 4;
         vals[2] -= 2; vals[3] += 2;
 
-        syncedBoard1Text.Value = $"Wartości: {vals[0]}, {vals[1]}, {vals[2]}, {vals[3]}, {vals[4]}";
+        syncedBoard1Text.Value = $"Ostatnie wygrane:\n {vals[0]}\n {vals[1]}\n {vals[2]}\n {vals[3]}\n {vals[4]}";
         targetCode1 = ExtractDigits(mean1);
         machine1.SetupReelOptions(targetCode1);
 
@@ -276,7 +275,7 @@ public class SlotManager : NetworkBehaviour
 
         float mean2 = (w1 * val1 + w2 * val2 + w3 * val3) / 10.0f;
 
-        syncedBoard2Text.Value = $"Wygrane:\n🍒 Wisienki: {val1}\n🔔 Dzwonki: {val2}\n💎 Diamenty: {val3}";
+        syncedBoard2Text.Value = $"Nagrody:\n3x🍒 - {val1}\n3x🔔 - {val2}\n3x💎 - {val3}";
         syncedNoteText.Value = $"Zapiski częstości (wagi / 10):\n🍒 Szansa: {w1}\n🔔 Szansa: {w2}\n💎 Szansa: {w3}";
 
         targetCode2 = ExtractDigits(mean2);

@@ -16,13 +16,13 @@ public class DiceManager : NetworkBehaviour
     [SerializeField] private GameObject notePanelRoot;
     [SerializeField] private DiceController[] activeDice;
 
-    [SerializeField] private PuzzlePiece scenePuzzlePiece;
+    [SerializeField] private DoorItem keyItem;
 
 
-    private string introDialogue = $"<mark=#1E1E1Eff><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am w notatniku {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.</color></mark>";
-    private string successDialogue = "<mark=#1E1E1Eff><color=green>Niewiarygodne! To dok³adnie ta liczba. Trzymaj to w nagrodê.</color></mark>";
-    private string failDialogue = "<mark=#1E1E1Eff><color=red>Coœ siê nie zgadza... Suma u³o¿onych koœci to nie dominanta z moich zapisków.</color></mark>";
-    private string alreadySolvedDialogue = "<mark=#1E1E1Eff><color=white>Dziêkujê za pomoc, zagadka zosta³a ju¿ rozwi¹zana.</color></mark>";
+    private string introDialogue = $"<mark=#FFFFFF0F><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am w notatniku {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.</color></mark>";
+    private string successDialogue = "<mark=#FFFFFF0F><color=green>Niewiarygodne! To dok³adnie ta liczba. Trzymaj to w nagrodê.</color></mark>";
+    private string failDialogue = "<mark=#FFFFFF0F><color=red>Coœ siê nie zgadza... Suma u³o¿onych koœci to nie dominanta z moich zapisków.</color></mark>";
+    private string alreadySolvedDialogue = "<mark=#FFFFFF0F><color=white>Dziêkujê za pomoc, zagadka zosta³a ju¿ rozwi¹zana.</color></mark>";
 
     private readonly NetworkVariable<int> targetModeSum = new(
         -1,
@@ -118,20 +118,20 @@ public class DiceManager : NetworkBehaviour
 
     private void ApplyRewardState(bool revealed)
     {
-        if (scenePuzzlePiece == null) return;
+        if (keyItem == null) return;
 
-        var renderers = scenePuzzlePiece.GetComponentsInChildren<Renderer>(true);
+        var renderers = keyItem.GetComponentsInChildren<Renderer>(true);
         foreach (var r in renderers) r.enabled = revealed;
 
-        var colliders = scenePuzzlePiece.GetComponentsInChildren<Collider>(true);
+        var colliders = keyItem.GetComponentsInChildren<Collider>(true);
         foreach (var c in colliders) c.enabled = revealed;
 
-        if (scenePuzzlePiece.TryGetComponent<GrabbableObject>(out var grabbable))
+        if (keyItem.TryGetComponent<GrabbableObject>(out var grabbable))
         {
             grabbable.enabled = revealed;
         }
 
-        if (scenePuzzlePiece.TryGetComponent<Rigidbody>(out var rb))
+        if (keyItem.TryGetComponent<Rigidbody>(out var rb))
         {
             rb.isKinematic = !revealed;
         }

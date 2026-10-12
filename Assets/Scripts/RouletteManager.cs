@@ -12,17 +12,17 @@ public class RouletteManager : NetworkBehaviour
     [SerializeField] private TMP_Text riddleDisplay;
     [SerializeField] private TMP_Text numbersDisplay;
 
-    [SerializeField] private PuzzlePiece scenePuzzlePiece;
+    [SerializeField] private DoorItem keyItem;
     [SerializeField] private Transform rouletteLidTransform;
 
     private float openHeightOffset = 1.5f; 
     private float openXOffset = 2.0f;
     private Vector3 openRotationEuler = new Vector3(90f, 0f, 0f);
 
-    private string riddleText = $"<mark=#1E1E1Eff><color=white>Maszyna zaciê³a siê. Za ka¿dym razem wypada mediana z ostatnich {NumberCount} losowañ.</color></mark>";
-    private string winMessage = "<mark=#1E1E1Eff><color=green>W³aœciwe pole obstawione.</color></mark>";
-    private string loseMessage = "<mark=#1E1E1Eff><color=red>B³êdne pole obstawione.</color></mark>";
-    private string noChipMessage = "<mark=#1E1E1Eff><color=red>¯eton nie znajduje siê na ¿adnym polu!</color></mark>";
+    private string riddleText = $"<mark=#FFFFFF0F><color=white>Maszyna zaciê³a siê. Za ka¿dym razem wypada mediana z ostatnich {NumberCount} losowañ.</color></mark>";
+    private string winMessage = "<mark=#FFFFFF0F><color=green>W³aœciwe pole obstawione.</color></mark>";
+    private string loseMessage = "<mark=#FFFFFF0F><color=red>B³êdne pole obstawione.</color></mark>";
+    private string noChipMessage = "<mark=#FFFFFF0F><color=red>¯eton nie znajduje siê na ¿adnym polu!</color></mark>";
 
     private readonly NetworkVariable<int> correctFieldValue = new(
         -1,
@@ -136,20 +136,20 @@ public class RouletteManager : NetworkBehaviour
 
     private void ApplyRewardState(bool revealed)
     {
-        if (scenePuzzlePiece == null) return;
+        if (keyItem == null) return;
 
-        var renderers = scenePuzzlePiece.GetComponentsInChildren<Renderer>(true);
+        var renderers = keyItem.GetComponentsInChildren<Renderer>(true);
         foreach (var r in renderers) r.enabled = revealed;
 
-        var colliders = scenePuzzlePiece.GetComponentsInChildren<Collider>(true);
+        var colliders = keyItem.GetComponentsInChildren<Collider>(true);
         foreach (var c in colliders) c.enabled = revealed;
 
-        if (scenePuzzlePiece.TryGetComponent<GrabbableObject>(out var grabbable))
+        if (keyItem.TryGetComponent<GrabbableObject>(out var grabbable))
         {
             grabbable.enabled = revealed;
         }
 
-        if (scenePuzzlePiece.TryGetComponent<Rigidbody>(out var rb))
+        if (keyItem.TryGetComponent<Rigidbody>(out var rb))
         {
             rb.isKinematic = !revealed;
         }
