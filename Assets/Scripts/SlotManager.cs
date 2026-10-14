@@ -213,7 +213,11 @@ public class SlotManager : NetworkBehaviour
 
         if (machineIndex == 0 && CurrentStage.Value == PuzzleStage.Machine1_Active)
         {
-            if (machine1.VerifyCode())
+            if (machine1 == null) return;
+            int[] vals = machine1.GetCurrentValues();
+            bool isCorrect = (vals[0] == targetCode1[0] && vals[1] == targetCode1[1] && vals[2] == targetCode1[2]);
+
+            if (isCorrect)
             {
                 CurrentStage.Value = PuzzleStage.Machine2_Active;
                 lever1.SetUnlocked(false);
@@ -227,7 +231,11 @@ public class SlotManager : NetworkBehaviour
         }
         else if (machineIndex == 1 && CurrentStage.Value == PuzzleStage.Machine2_Active)
         {
-            if (machine2.VerifyCode())
+            if (machine2 == null) return;
+            int[] vals = machine2.GetCurrentValues();
+            bool isCorrect = (vals[0] == targetCode2[0] && vals[1] == targetCode2[1] && vals[2] == targetCode2[2]);
+
+            if (isCorrect)
             {
                 CurrentStage.Value = PuzzleStage.Completed;
                 lever2.SetUnlocked(false);

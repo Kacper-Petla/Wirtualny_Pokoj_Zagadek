@@ -8,31 +8,21 @@ public class SlotMachine : NetworkBehaviour
     [SerializeField] private SlotReel reel2;
     [SerializeField] private SlotReel reel3;
 
-    private int[] currentTargetCode = new int[3] { 1, 2, 3 };
-
-    public override void OnNetworkSpawn()
-    {
-        if (reel1 != null) reel1.CurrentIndex.OnValueChanged += OnReelChanged;
-        if (reel2 != null) reel2.CurrentIndex.OnValueChanged += OnReelChanged;
-        if (reel3 != null) reel3.CurrentIndex.OnValueChanged += OnReelChanged;
-
-        UpdateDisplay();
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        if (reel1 != null) reel1.CurrentIndex.OnValueChanged -= OnReelChanged;
-        if (reel2 != null) reel2.CurrentIndex.OnValueChanged -= OnReelChanged;
-        if (reel3 != null) reel3.CurrentIndex.OnValueChanged -= OnReelChanged;
-    }
-
     public void SetupReelOptions(int[] targetCode)
     {
-        currentTargetCode = (int[])targetCode.Clone();
+        if (!IsServer || targetCode == null) return;
 
         if (reel1 != null) reel1.SetupNumbers(GenerateReelNumbers(targetCode[0]));
         if (reel2 != null) reel2.SetupNumbers(GenerateReelNumbers(targetCode[1]));
         if (reel3 != null) reel3.SetupNumbers(GenerateReelNumbers(targetCode[2]));
+    }
+
+    public int[] GetCurrentValues()
+    {
+        int v1 = reel1 != null ? reel1.CurrentValue : -1;
+        int v2 = reel2 != null ? reel2.CurrentValue : -1;
+        int v3 = reel3 != null ? reel3.CurrentValue : -1;
+        return new int[] { v1, v2, v3 };
     }
 
     private int[] GenerateReelNumbers(int targetDigit)
@@ -55,41 +45,5 @@ public class SlotMachine : NetworkBehaviour
         }
 
         return digits.ToArray();
-    }
-
-    private void OnReelChanged(int oldIdx, int newIdx)
-    {
-        UpdateDisplay();
-    }
-
-    private void UpdateDisplay()
-    {
-        if (reel1 == null || reel2 == null || reel3 == null) return;
-
-        int val1 = reel1.CurrentValue;
-        int val2 = reel2.CurrentValue;
-        int val3 = reel3.CurrentValue;
-    }
-
-    public bool VerifyCode()
-    {
-        if (!IsServer) return false;
-        if (reel1 == null || reel2 == null || reel3 == null) return false;
-
-        int val1 = reel1.CurrentValue;
-        int val2 = reel2.CurrentValue;
-        int val3 = reel3.CurrentValue;
-
-
-        if (val1 == currentTargetCode[0] && val2 == currentTargetCode[1] && val3 == currentTargetCode[2])
-        {
-            Debug.Log("[SlotMachine] SUKCES: Kod poprawny!");
-            return true;
-        }
-        else
-        {
-            Debug.Log("[SlotMachine] B£¥D: Z³a kombinacja.");
-            return false;
-        }
     }
 }

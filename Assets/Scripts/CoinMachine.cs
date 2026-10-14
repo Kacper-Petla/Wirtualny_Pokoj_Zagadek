@@ -11,8 +11,7 @@ public class CoinMachine : NetworkBehaviour
         Success,
         Error
     }
-
-    [SerializeField] private int targetRequiredValue = 5;
+    [SerializeField] private CoinManager coinManager;
 
     [SerializeField] private TextMeshPro scoreDisplay;
     [SerializeField] private Renderer statusLightRenderer;
@@ -31,6 +30,8 @@ public class CoinMachine : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+
+    public NetworkVariable<int> CurrentScore => currentScore;
 
     public override void OnNetworkSpawn()
     {
@@ -88,7 +89,17 @@ public class CoinMachine : NetworkBehaviour
 
         if (currentLightState.Value == LightState.Success) return;
 
-        if (currentScore.Value == targetRequiredValue)
+        if (coinManager != null)
+        {
+            coinManager.VerifyMachine(this);
+        }
+    }
+
+    public void SetResult(bool success)
+    {
+        if (!IsServer) return;
+
+        if (success)
         {
             currentLightState.Value = LightState.Success;
         }
@@ -103,7 +114,7 @@ public class CoinMachine : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        //if (currentLightState.Value == LightState.Success) return;
+        if (currentLightState.Value == LightState.Success) return;
 
         currentScore.Value = 0;
         currentLightState.Value = LightState.Off;
@@ -124,7 +135,7 @@ public class CoinMachine : NetworkBehaviour
     {
         if (scoreDisplay != null)
         {
-            scoreDisplay.text = value.ToString();
+            scoreDisplay.text =$"{ value }\n---\n380";
         }
     }
 

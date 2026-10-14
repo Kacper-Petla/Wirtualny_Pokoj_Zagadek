@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class MachineButton : MonoBehaviour, IInteractable
+public class SimpleButton : MonoBehaviour, IInteractable
 {
     [SerializeField] private UnityEvent onClick;
 
