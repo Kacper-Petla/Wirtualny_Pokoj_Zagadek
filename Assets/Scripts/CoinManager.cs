@@ -102,12 +102,6 @@ public class CoinManager : NetworkBehaviour
         {
             rb.isKinematic = !revealed;
             rb.useGravity = revealed;
-
-            if (!revealed)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
         }
     }
 

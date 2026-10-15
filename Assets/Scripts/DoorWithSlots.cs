@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class DoorWithSlots : NetworkBehaviour, IInteractable
 {
@@ -13,6 +14,8 @@ public class DoorWithSlots : NetworkBehaviour, IInteractable
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+
+    [SerializeField] private UnityEvent onInteracted;
 
     private bool[] placedSlots;
 
@@ -44,6 +47,8 @@ public class DoorWithSlots : NetworkBehaviour, IInteractable
     public void Interact()
     {
         if (!IsServer || IsUnlocked.Value) return;
+
+        onInteracted?.Invoke();
 
         if (CountPlaced() == TotalSlots)
         {
