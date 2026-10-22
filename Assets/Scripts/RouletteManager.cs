@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
@@ -15,12 +16,18 @@ public class RouletteManager : NetworkBehaviour
     [SerializeField] private DoorItem keyItem;
     [SerializeField] private Transform rouletteLidTransform;
 
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip introAudio;
+    [SerializeField] private AudioClip successAudio;
+    [SerializeField] private AudioClip failAudio;
+    [SerializeField] private AudioClip noChipAudio;
+
     private float openHeightOffset = 1.5f; 
     private float openXOffset = 2.0f;
     private Vector3 openRotationEuler = new Vector3(90f, 0f, 0f);
 
     private string riddleText = $"<mark=#FFFFFF0F><color=white>Maszyna zaciê³a siê. Za ka¿dym razem wypada mediana z ostatnich {NumberCount} losowañ.</color></mark>";
-    private string winMessage = "<mark=#FFFFFF0F><color=green>W³aœciwe pole obstawione.</color></mark>";
+    private string winMessage = "<mark=#FFFFFF0F><color=green>W³aœciwe pole obstawione. Oto twoja nagroda.</color></mark>";
     private string loseMessage = "<mark=#FFFFFF0F><color=red>B³êdne pole obstawione.</color></mark>";
     private string noChipMessage = "<mark=#FFFFFF0F><color=red>¯eton nie znajduje siê na ¿adnym polu!</color></mark>";
 
@@ -36,7 +43,7 @@ public class RouletteManager : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
-    private readonly NetworkVariable<FixedString64Bytes> syncedNumbersText = new(
+    private readonly NetworkVariable<FixedString512Bytes> syncedNumbersText = new(
         string.Empty,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
@@ -106,9 +113,12 @@ public class RouletteManager : NetworkBehaviour
     public void DisplayRiddle()
     {
         syncedRiddleText.Value = riddleText;
+
+        audioSource.clip = introAudio;
+        audioSource.Play();
     }
 
-    private void OnNumbersChanged(FixedString64Bytes oldVal, FixedString64Bytes newVal)
+    private void OnNumbersChanged(FixedString512Bytes oldVal, FixedString512Bytes newVal)
     {
         if (numbersDisplay != null && !newVal.IsEmpty)
         {
@@ -162,21 +172,25 @@ public class RouletteManager : NetworkBehaviour
         int[] generatedNumbers = new int[NumberCount];
         int[] sortedCopy = new int[NumberCount];
 
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("<b>Ostatnio wylosowane:</b>");
+
         for (int i = 0; i < NumberCount; i++)
         {
             int val = UnityEngine.Random.Range(0, 37);
             generatedNumbers[i] = val;
             sortedCopy[i] = val;
+
+            sb.AppendLine($"{i + 1}.\t{val}");
         }
+
+        syncedNumbersText.Value = sb.ToString();
 
         int med = NumberCount / 2;
         Array.Sort(sortedCopy);
         correctFieldValue.Value = sortedCopy[med];
 
-        Debug.Log($"[Roulette] Wylosowano: {string.Join(", ", generatedNumbers)}");
         Debug.Log($"[Roulette] Posortowane: {string.Join(", ", sortedCopy)} | Mediana (Cel): {correctFieldValue.Value}");
-
-        syncedNumbersText.Value = string.Join("  ", generatedNumbers);
     }
 
     public void Verify()
@@ -189,6 +203,9 @@ public class RouletteManager : NetworkBehaviour
 
         if (targetChip == null || targetChip.CurrentField == null)
         {
+            audioSource.clip = noChipAudio;
+            audioSource.Play();
+
             Debug.Log("[Roulette] ¯eton nie le¿y na ¿adnym polu!");
             syncedRiddleText.Value = noChipMessage;
             return;
@@ -199,12 +216,18 @@ public class RouletteManager : NetworkBehaviour
 
         if (placedValue == correctFieldValue.Value)
         {
+            audioSource.clip = successAudio;
+            audioSource.Play();
+
             IsSolved.Value = true;
             Debug.Log("[Roulette] SUKCES! W³aœciwe pole obstawione.");
             syncedRiddleText.Value = winMessage;
         }
         else
         {
+            audioSource.clip = failAudio;
+            audioSource.Play();
+
             Debug.Log("[Roulette] B£¥D! Z³e pole.");
             syncedRiddleText.Value = loseMessage;
         }

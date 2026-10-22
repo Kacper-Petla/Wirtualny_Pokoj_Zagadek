@@ -18,10 +18,16 @@ public class DiceManager : NetworkBehaviour
 
     [SerializeField] private DoorItem keyItem;
 
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip introAudio;
+    [SerializeField] private AudioClip successAudio;
+    [SerializeField] private AudioClip failAudio;
+    [SerializeField] private AudioClip solvedAudio;
+
 
     private string introDialogue = $"<mark=#FFFFFF0F><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am w notatniku {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.</color></mark>";
     private string successDialogue = "<mark=#FFFFFF0F><color=green>Niewiarygodne! To dok³adnie ta liczba. Trzymaj to w nagrodê.</color></mark>";
-    private string failDialogue = "<mark=#FFFFFF0F><color=red>Coœ siê nie zgadza... Suma u³o¿onych koœci to nie dominanta z moich zapisków.</color></mark>";
+    private string failDialogue = "<mark=#FFFFFF0F><color=red>Coœ siê nie zgadza. Suma u³o¿onych koœci to nie dominanta z moich zapisków.</color></mark>";
     private string alreadySolvedDialogue = "<mark=#FFFFFF0F><color=white>Dziêkujê za pomoc, zagadka zosta³a ju¿ rozwi¹zana.</color></mark>";
 
     private readonly NetworkVariable<int> targetModeSum = new(
@@ -141,12 +147,18 @@ public class DiceManager : NetworkBehaviour
     {
         if (IsSolved.Value)
         {
+            audioSource.clip = solvedAudio;
+            audioSource.Play();
+
             syncedDialogue.Value = alreadySolvedDialogue;
             return;
         }
 
         if (!Explained.Value)
         {
+            audioSource.clip = introAudio;
+            audioSource.Play();
+
             syncedDialogue.Value = introDialogue;
             Explained.Value = true;
             return;
@@ -270,11 +282,17 @@ public class DiceManager : NetworkBehaviour
 
         if (currentSum == targetModeSum.Value)
         {
+            audioSource.clip = successAudio;
+            audioSource.Play();
+
             IsSolved.Value = true;
             syncedDialogue.Value = successDialogue;
         }
         else
         {
+            audioSource.clip = failAudio;
+            audioSource.Play();
+
             syncedDialogue.Value = failDialogue;
             Explained.Value = false;
         }

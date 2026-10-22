@@ -18,6 +18,11 @@ public class CoinManager : NetworkBehaviour
 
     [SerializeField] private DoorItem keyItem;
 
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip introAudio;
+    [SerializeField] private AudioClip successAudio;
+
+
     private string riddleText = string.Empty;
     private string winText = "<mark=#FFFFFF0F><color=green>Uda³o ci siê rozwi¹zaæ zagadkê. Odbierz swoj¹ nagrodê.</color></mark>";
 
@@ -67,6 +72,9 @@ public class CoinManager : NetworkBehaviour
         if (IsServer && !IsSolved.Value)
         {
             syncedRiddleText.Value = riddleText;
+
+            audioSource.clip = introAudio;
+            audioSource.Play();
         }
     }
 
@@ -136,6 +144,10 @@ public class CoinManager : NetworkBehaviour
             {
                 IsSolved.Value = true;
                 syncedRiddleText.Value = winText;
+
+                audioSource.clip = successAudio;
+                audioSource.Play();
+
                 Debug.Log("[CoinManager] Sukces! Maszyna g³ówna rozwi¹zana.");
             }
         }

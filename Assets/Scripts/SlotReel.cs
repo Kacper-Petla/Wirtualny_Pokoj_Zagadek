@@ -1,4 +1,5 @@
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -10,28 +11,44 @@ public class SlotReel : NetworkBehaviour
 
     private Vector3 localRotationAxis = Vector3.back;
 
+    private readonly NetworkVariable<FixedString32Bytes> syncedDigits = new(
+        "0123",
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     public readonly NetworkVariable<int> CurrentIndex = new(
         0,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
-    public int CurrentValue => (reelNumbers != null && reelNumbers.Length > CurrentIndex.Value)
-        ? reelNumbers[CurrentIndex.Value]
-        : 0;
-
-    public void SetupNumbers(int[] numbers)
+    public int CurrentValue
     {
-        reelNumbers = numbers;
-
-        if (faceTexts != null && numbers != null)
+        get
         {
-            for (int i = 0; i < faceTexts.Length && i < numbers.Length; i++)
+            string s = syncedDigits.Value.ToString();
+            if (string.IsNullOrEmpty(s) || CurrentIndex.Value >= s.Length) return 0;
+            return s[CurrentIndex.Value] - '0';
+        }
+    }
+
+    public void SetupNumbers(int[] digits)
+    {
+        if (digits == null || digits.Length < 4) return;
+        syncedDigits.Value = $"{digits[0]}{digits[1]}{digits[2]}{digits[3]}";
+    }
+
+    private void UpdateVisuals()
+    {
+        string numbers = syncedDigits.Value.ToString();
+        if (string.IsNullOrEmpty(numbers) || faceTexts == null) return;
+
+        for (int i = 0; i < faceTexts.Length && i < numbers.Length; i++)
+        {
+            if (faceTexts[i] != null)
             {
-                if (faceTexts[i] != null)
-                {
-                    faceTexts[i].text = numbers[i].ToString();
-                }
+                faceTexts[i].text = numbers[i].ToString();
             }
         }
     }
@@ -39,12 +56,20 @@ public class SlotReel : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         CurrentIndex.OnValueChanged += OnIndexChanged;
+        syncedDigits.OnValueChanged += OnNumbersChanged;
+        UpdateVisuals();
         ApplyRotation(CurrentIndex.Value);
     }
 
     public override void OnNetworkDespawn()
     {
         CurrentIndex.OnValueChanged -= OnIndexChanged;
+        syncedDigits.OnValueChanged -= OnNumbersChanged;
+    }
+
+    private void OnNumbersChanged(FixedString32Bytes oldIndex, FixedString32Bytes newIndex)
+    {
+        UpdateVisuals();
     }
 
     private void OnIndexChanged(int oldIndex, int newIndex)

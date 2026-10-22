@@ -10,7 +10,7 @@ public class SlotMachine : NetworkBehaviour
 
     public void SetupReelOptions(int[] targetCode)
     {
-        if (!IsServer || targetCode == null) return;
+        if (targetCode == null) return;
 
         if (reel1 != null) reel1.SetupNumbers(GenerateReelNumbers(targetCode[0]));
         if (reel2 != null) reel2.SetupNumbers(GenerateReelNumbers(targetCode[1]));

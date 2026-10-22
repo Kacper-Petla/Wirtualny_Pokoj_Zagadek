@@ -28,6 +28,16 @@ public class TutorialManager : NetworkBehaviour
     [SerializeField] private GameObject realKey;
     [SerializeField] private GameObject ghostHandNotebook;
 
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip introAudio;
+    [SerializeField] private AudioClip AimAtGhostAudio;
+    [SerializeField] private AudioClip PlaceGreenCubeAudio;
+    [SerializeField] private AudioClip PlaceRedCubeAudio;
+    [SerializeField] private AudioClip ClickFakeKeyAudio;
+    [SerializeField] private AudioClip ClickDoorToResetAudio;
+    [SerializeField] private AudioClip TakeNotebookAudio;
+    [SerializeField] private AudioClip OpenNotebookAudio;
+
     public readonly NetworkVariable<TutorialStep> CurrentStep = new(
         TutorialStep.AimAtGhost,
         NetworkVariableReadPermission.Everyone,
@@ -104,12 +114,25 @@ public class TutorialManager : NetworkBehaviour
         }
     }
 
+    public void DisplayRiddle()
+    {
+        if (!IsServer || CurrentStep.Value != TutorialStep.AimAtGhost) return;
+
+        syncedDialogue.Value = msgIntro;
+
+        audioSource.clip = introAudio;
+        audioSource.Play();
+    }
+
     public void OnGhostClicked()
     {
         if (!IsServer || CurrentStep.Value != TutorialStep.AimAtGhost) return;
 
         CurrentStep.Value = TutorialStep.PlaceGreenCube;
         syncedDialogue.Value = msgGreenCube;
+
+        audioSource.clip = AimAtGhostAudio;
+        audioSource.Play();
     }
 
     public void OnGreenPadPlaced()
@@ -118,6 +141,9 @@ public class TutorialManager : NetworkBehaviour
 
         CurrentStep.Value = TutorialStep.PlaceRedCube;
         syncedDialogue.Value = msgRedCube;
+
+        audioSource.clip = PlaceGreenCubeAudio;
+        audioSource.Play();
     }
 
     public void OnRedPadPlaced()
@@ -126,6 +152,9 @@ public class TutorialManager : NetworkBehaviour
 
         CurrentStep.Value = TutorialStep.ClickFakeKey;
         syncedDialogue.Value = msgFakeKey;
+
+        audioSource.clip = PlaceRedCubeAudio;
+        audioSource.Play();
     }
 
     public void OnFakeKeyClicked()
@@ -136,15 +165,20 @@ public class TutorialManager : NetworkBehaviour
 
         CurrentStep.Value = TutorialStep.ClickDoorToReset;
         syncedDialogue.Value = msgDoorReset;
+
+        audioSource.clip = ClickFakeKeyAudio;
+        audioSource.Play();
     }
 
     public void OnDoorClickedForReset()
     {
-        Debug.Log("[Roulette] B£¥D! Z³e pole.");
         if (!IsServer || CurrentStep.Value != TutorialStep.ClickDoorToReset) return;
 
         CurrentStep.Value = TutorialStep.TakeNotebook;
         syncedDialogue.Value = msgTakeNotebook;
+
+        audioSource.clip = ClickDoorToResetAudio;
+        audioSource.Play();
     }
 
     public void OnNotebookTaken()
@@ -156,8 +190,14 @@ public class TutorialManager : NetworkBehaviour
         //CurrentStep.Value = TutorialStep.OpenNotebook;
         //syncedDialogue.Value = msgOpenNotebook;
 
+        //audioSource.clip = TakeNotebookAudio;
+        //audioSource.Play();
+
         CurrentStep.Value = TutorialStep.Completed;
         syncedDialogue.Value = msgTakeRealKey;
+
+        audioSource.clip = OpenNotebookAudio;
+        audioSource.Play();
     }
 
     public void OnNotebookOpenedByPlayer()
@@ -166,6 +206,9 @@ public class TutorialManager : NetworkBehaviour
 
         CurrentStep.Value = TutorialStep.Completed;
         syncedDialogue.Value = msgTakeRealKey;
+
+        audioSource.clip = OpenNotebookAudio;
+        audioSource.Play();
     }
 
     private void SetItemActive(GameObject item, bool active)

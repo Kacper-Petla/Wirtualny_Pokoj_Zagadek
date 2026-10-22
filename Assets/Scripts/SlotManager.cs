@@ -30,9 +30,20 @@ public class SlotManager : NetworkBehaviour
     [SerializeField] private SlotMachine machine2;
     [SerializeField] private SlotLever lever2;
 
-    [Header("Rewards (Scene Objects)")]
+    [Header("Rewards")]
     [SerializeField] private GameObject rewardNote;
     [SerializeField] private GameObject rewardKey;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip intro1Audio;
+    [SerializeField] private AudioClip riddle1Audio;
+    [SerializeField] private AudioClip intro2Audio;
+    [SerializeField] private AudioClip riddle2Audio;
+    [SerializeField] private AudioClip successAudio;
+    [SerializeField] private AudioClip failAudio;
+    [SerializeField] private AudioClip solvedAudio;
+    [SerializeField] private AudioClip pickupAudio;
 
     public readonly NetworkVariable<PuzzleStage> CurrentStage = new(
         PuzzleStage.WaitingForGhost,
@@ -143,6 +154,9 @@ public class SlotManager : NetworkBehaviour
 
         isNotePinnedToWall.Value = true;
         syncedGhostText.Value = pickupDialogue;
+
+        audioSource.clip = pickupAudio;
+        audioSource.Play();
     }
 
     private void ApplyNoteWallState(bool pinned)
@@ -192,18 +206,30 @@ public class SlotManager : NetworkBehaviour
             CurrentStage.Value = PuzzleStage.Machine1_Active;
             lever1.SetUnlocked(true);
             syncedGhostText.Value = introDialogue1;
+
+            audioSource.clip = intro1Audio;
+            audioSource.Play();
         }
         else if (CurrentStage.Value == PuzzleStage.Machine1_Active)
         {
             syncedGhostText.Value = riddleDialogue1;
+
+            audioSource.clip = riddle1Audio;
+            audioSource.Play();
         }
         else if (CurrentStage.Value == PuzzleStage.Machine2_Active)
         {
             syncedGhostText.Value = riddleDialogue2;
+
+            audioSource.clip = riddle2Audio;
+            audioSource.Play();
         }
         else
         {
             syncedGhostText.Value = alreadySolvedDialogue;
+
+            audioSource.clip = solvedAudio;
+            audioSource.Play();
         }
     }
 
@@ -223,10 +249,16 @@ public class SlotManager : NetworkBehaviour
                 lever1.SetUnlocked(false);
                 lever2.SetUnlocked(true);
                 syncedGhostText.Value = introDialogue2;
+
+                audioSource.clip = intro2Audio;
+                audioSource.Play();
             }
             else
             {
                 syncedGhostText.Value = failDialogue;
+
+                audioSource.clip = failAudio;
+                audioSource.Play();
             }
         }
         else if (machineIndex == 1 && CurrentStage.Value == PuzzleStage.Machine2_Active)
@@ -240,10 +272,16 @@ public class SlotManager : NetworkBehaviour
                 CurrentStage.Value = PuzzleStage.Completed;
                 lever2.SetUnlocked(false);
                 syncedGhostText.Value = successDialogue;
+
+                audioSource.clip = successAudio;
+                audioSource.Play();
             }
             else
             {
                 syncedGhostText.Value = failDialogue;
+
+                audioSource.clip = failAudio;
+                audioSource.Play();
             }
         }
     }
