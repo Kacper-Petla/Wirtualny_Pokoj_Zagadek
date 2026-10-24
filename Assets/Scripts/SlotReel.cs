@@ -7,9 +7,9 @@ public class SlotReel : NetworkBehaviour
 {
     [SerializeField] private TMP_Text[] faceTexts = new TMP_Text[4];
 
-    private int[] reelNumbers = new int[4];
-
     private Vector3 localRotationAxis = Vector3.back;
+
+    private int[] pendingDigits = null;
 
     private readonly NetworkVariable<FixedString32Bytes> syncedDigits = new(
         "0123",
@@ -36,7 +36,50 @@ public class SlotReel : NetworkBehaviour
     public void SetupNumbers(int[] digits)
     {
         if (digits == null || digits.Length < 4) return;
-        syncedDigits.Value = $"{digits[0]}{digits[1]}{digits[2]}{digits[3]}";
+
+        // Jeœli obiekt jest ju¿ w pe³ni zespawnowany w Netcode:
+        if (IsSpawned && IsServer)
+        {
+            syncedDigits.Value = $"{digits[0]}{digits[1]}{digits[2]}{digits[3]}";
+            UpdateVisuals();
+        }
+        else
+        {
+            // Jeœli obiekt czeka jeszcze w kolejce sweepa, zapamiêtujemy dane
+            pendingDigits = (int[])digits.Clone();
+        }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        CurrentIndex.OnValueChanged += OnIndexChanged;
+        syncedDigits.OnValueChanged += OnNumbersChanged;
+
+        // Jeœli serwer otrzyma³ cyfry przed wejœciem w OnNetworkSpawn, aplikujemy je teraz
+        if (IsServer && pendingDigits != null)
+        {
+            syncedDigits.Value = $"{pendingDigits[0]}{pendingDigits[1]}{pendingDigits[2]}{pendingDigits[3]}";
+            pendingDigits = null;
+        }
+
+        UpdateVisuals();
+        ApplyRotation(CurrentIndex.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        CurrentIndex.OnValueChanged -= OnIndexChanged;
+        syncedDigits.OnValueChanged -= OnNumbersChanged;
+    }
+
+    private void OnNumbersChanged(FixedString32Bytes oldVal, FixedString32Bytes newVal)
+    {
+        UpdateVisuals();
+    }
+
+    private void OnIndexChanged(int oldIndex, int newIndex)
+    {
+        ApplyRotation(newIndex);
     }
 
     private void UpdateVisuals()
@@ -53,32 +96,10 @@ public class SlotReel : NetworkBehaviour
         }
     }
 
-    public override void OnNetworkSpawn()
-    {
-        CurrentIndex.OnValueChanged += OnIndexChanged;
-        syncedDigits.OnValueChanged += OnNumbersChanged;
-        UpdateVisuals();
-        ApplyRotation(CurrentIndex.Value);
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        CurrentIndex.OnValueChanged -= OnIndexChanged;
-        syncedDigits.OnValueChanged -= OnNumbersChanged;
-    }
-
-    private void OnNumbersChanged(FixedString32Bytes oldIndex, FixedString32Bytes newIndex)
-    {
-        UpdateVisuals();
-    }
-
-    private void OnIndexChanged(int oldIndex, int newIndex)
-    {
-        ApplyRotation(newIndex);
-    }
-
     public void RotateStep(int direction)
     {
+        if (!IsServer) return;
+
         int nextIndex = (CurrentIndex.Value + direction) % 4;
         if (nextIndex < 0) nextIndex += 4;
 

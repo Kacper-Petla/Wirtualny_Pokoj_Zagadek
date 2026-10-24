@@ -91,6 +91,11 @@ public class SlotManager : NetworkBehaviour
         CurrentStage.OnValueChanged += OnStageChanged;
         isNotePinnedToWall.OnValueChanged += OnNotePinnedChanged;
 
+        if (ghostDialogueDisplay != null && !syncedGhostText.Value.IsEmpty) ghostDialogueDisplay.text = syncedGhostText.Value.ToString();
+        if (board1Display != null && !syncedBoard1Text.Value.IsEmpty) board1Display.text = syncedBoard1Text.Value.ToString();
+        if (board2Display != null && !syncedBoard2Text.Value.IsEmpty) board2Display.text = syncedBoard2Text.Value.ToString();
+        if (noteTextDisplay != null && !syncedNoteText.Value.IsEmpty) noteTextDisplay.text = syncedNoteText.Value.ToString();
+
         ApplyStageVisuals(CurrentStage.Value);
         ApplyNoteWallState(isNotePinnedToWall.Value);
 
