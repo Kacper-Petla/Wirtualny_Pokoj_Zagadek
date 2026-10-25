@@ -5,17 +5,13 @@ using UnityEngine.Events;
 [Serializable]
 public struct RoomHintPage
 {
-    [Tooltip("Tytu³ podpowiedzi (wyœwietlany u góry)")]
     public string hintTitle;
 
-    [Tooltip("Jeœli przypisany, notatnik ukryje tekst i wyœwietli ten obraz na ca³ej stronie")]
     public Sprite hintImage;
 
     [TextArea(3, 8)]
-    [Tooltip("Tekst podpowiedzi (u¿ywany tylko, gdy pole hintImage jest puste)")]
     public string content;
 
-    [Tooltip("Po ilu sekundach od wejœcia do pokoju strona ma siê odblokowaæ (0 = od razu)")]
     public float unlockDelaySeconds;
 
     public bool HasImage => hintImage != null;

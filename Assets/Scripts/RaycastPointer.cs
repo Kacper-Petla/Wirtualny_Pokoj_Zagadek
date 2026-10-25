@@ -59,6 +59,7 @@ public class RaycastPointer : NetworkBehaviour
             PerformRaycast();
             HandleHoverHighlight();
             HandleDistanceAdjustment();
+            HandleToolToggleInput();
 
             if (grabbedObject != null && !grabbedObject.IsGrabbed)
             {
@@ -67,6 +68,24 @@ public class RaycastPointer : NetworkBehaviour
         }
 
         UpdateVisualLine();
+    }
+
+    private void HandleToolToggleInput()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null || GameManager.Instance == null) return;
+
+        // Klawisz N - prze³¹czenie notatnika
+        if (keyboard.nKey.wasPressedThisFrame)
+        {
+            GameManager.Instance.ToggleNotebookSocket();
+        }
+
+        // Klawisz C - prze³¹czenie kalkulatora
+        if (keyboard.cKey.wasPressedThisFrame)
+        {
+            GameManager.Instance.ToggleCalculatorSocket();
+        }
     }
 
     private void HandleHoverHighlight()

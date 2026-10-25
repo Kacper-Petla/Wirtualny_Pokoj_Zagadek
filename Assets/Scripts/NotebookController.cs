@@ -41,22 +41,38 @@ public class NotebookController : NetworkBehaviour
     {
         CurrentPageIndex.OnValueChanged -= OnPageIndexChanged;
         TotalUnlockedPages.OnValueChanged -= OnTotalPagesChanged;
-        StopHintsTimer();
+        //StopHintsTimer();
     }
 
     public void LoadRoomHints(RoomHintPage[] pages)
     {
         if (!IsServer) return;
 
-        StopHintsTimer();
+        //StopHintsTimer();
         currentRoomHintPool = pages;
 
         // Czyœcimy poprzednie strony
-        ClearPagesClientRpc();
+        ClearPages();
 
         if (pages == null || pages.Length == 0) return;
 
-        hintUnlockCoroutine = StartCoroutine(UnlockHintsRoutine());
+        //hintUnlockCoroutine = StartCoroutine(UnlockHintsRoutine());
+
+        int nextPageIndexToUnlock = 0;
+
+        while (nextPageIndexToUnlock < currentRoomHintPool.Length)
+        {
+            Debug.Log("[GameManager] Pomiñ tutorial:");
+
+            // Przekazujemy klientom tylko indeks z puli pokoju
+            unlockedPages.Add(pages[nextPageIndexToUnlock]);
+
+            TotalUnlockedPages.Value = unlockedPages.Count;
+            CurrentPageIndex.Value = unlockedPages.Count - 1;
+
+            nextPageIndexToUnlock++;
+            
+        }
     }
 
     private void StopHintsTimer()
@@ -82,14 +98,13 @@ public class NotebookController : NetworkBehaviour
                    timer >= currentRoomHintPool[nextPageIndexToUnlock].unlockDelaySeconds)
             {
                 // Przekazujemy klientom tylko indeks z puli pokoju
-                UnlockPageClientRpc(nextPageIndexToUnlock);
+                UnlockPage(nextPageIndexToUnlock);
                 nextPageIndexToUnlock++;
             }
         }
     }
 
-    [ClientRpc]
-    private void ClearPagesClientRpc()
+    private void ClearPages()
     {
         unlockedPages.Clear();
         if (IsServer)
@@ -100,8 +115,7 @@ public class NotebookController : NetworkBehaviour
         UpdateDisplay();
     }
 
-    [ClientRpc]
-    private void UnlockPageClientRpc(int poolIndex)
+    private void UnlockPage(int poolIndex)
     {
         // Pobieramy dane strony z bie¿¹cego pokoju lokalnie
         int currentRoomIdx = GameManager.Instance.CurrentRoomIndex.Value;
@@ -121,11 +135,10 @@ public class NotebookController : NetworkBehaviour
         }
     }
 
-    public void NextPage() => ChangePageServerRpc(1);
-    public void PreviousPage() => ChangePageServerRpc(-1);
+    public void NextPage() => ChangePage(1);
+    public void PreviousPage() => ChangePage(-1);
 
-    [ServerRpc(RequireOwnership = false)]
-    private void ChangePageServerRpc(int step)
+    private void ChangePage(int step)
     {
         if (TotalUnlockedPages.Value <= 0) return;
 

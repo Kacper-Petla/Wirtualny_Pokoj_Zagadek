@@ -6,7 +6,6 @@ public class DoorWithSlots : NetworkBehaviour, IInteractable
 {
     [SerializeField] private Transform[] snapSockets;
     [SerializeField] private GrabbableObject[] expectedItems;
-    [SerializeField] private GameManager gameManager;
 
     [SerializeField] private int roomNumber;
 
@@ -55,7 +54,7 @@ public class DoorWithSlots : NetworkBehaviour, IInteractable
         {
             IsUnlocked.Value = true;
             Debug.Log($"[Room{roomNumber}] SUKCES: Wszystkie sloty zape³nione!");
-            gameManager.GoToNextRoom();
+            GameManager.Instance.GoToNextRoom();
             // =========================================================================
         }
         else

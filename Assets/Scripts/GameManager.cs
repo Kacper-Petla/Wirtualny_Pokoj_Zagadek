@@ -5,14 +5,15 @@ public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [Header("Rooms Configuration")]
     [SerializeField] private RoomController[] rooms;
 
-    [Header("Player / Camera (Do testów na WASD przeci¹gnij Main Camera)")]
     [SerializeField] private Transform playerTransform;
 
     [SerializeField] private NotebookController notebook;
     [SerializeField] private GameObject calculator;
+
+    [SerializeField] private Transform defaultNotebookSocket;
+    [SerializeField] private Transform defaultCalculatorSocket;
 
     public readonly NetworkVariable<int> CurrentRoomIndex = new(
         0,
@@ -25,6 +26,9 @@ public class GameManager : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+
+    private bool isNotebookAtDefault = true;
+    private bool isCalculatorAtDefault = true;
 
     private void Awake()
     {
@@ -39,6 +43,11 @@ public class GameManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         CurrentRoomIndex.OnValueChanged += HandleRoomIndexChanged;
+
+        if (IsClient && !IsServer && CurrentRoomIndex.Value > 0)
+        {
+            SyncPlayerToCurrentRoom(CurrentRoomIndex.Value);
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -60,6 +69,11 @@ public class GameManager : NetworkBehaviour
 
         // Jeœli pomijamy tutorial -> skaczemy do pokoju 2, w przeciwnym razie do 1
         int targetRoom = SkipTutorial.Value ? 2 : 1;
+
+        if (rooms != null && targetRoom < rooms.Length)
+        {
+            CurrentRoomIndex.Value = targetRoom;
+        }
     }
 
     public void GoToNextRoom()
@@ -90,6 +104,11 @@ public class GameManager : NetworkBehaviour
 
         ShiftPlayer(offset);
         targetRoom.OnRoomEntered();
+
+        if (IsServer)
+        {
+            InitRoomTools(newIndex);
+        }
     }
 
     private void InitRoomTools(int roomIdx)
@@ -104,35 +123,78 @@ public class GameManager : NetworkBehaviour
             notebook.LoadRoomHints(currentRoom.HintPages);
         }
 
-        DockNotebookToCurrentRoom();
-        DockCalculatorToCurrentRoom();
+        // 2. Resetujemy stan: na starcie nowego pokoju narzêdzia zawsze l¹duj¹ w defaultSocket
+        isNotebookAtDefault = true;
+        isCalculatorAtDefault = true;
+
+        if (notebook != null && defaultNotebookSocket != null)
+        {
+            SnapToolToSocket(notebook.gameObject, defaultNotebookSocket);
+        }
+
+        if (calculator != null && defaultCalculatorSocket != null)
+        {
+            SnapToolToSocket(calculator, defaultCalculatorSocket);
+        }
     }
 
-    public void DockNotebookToCurrentRoom()
+    public void ToggleNotebookSocket()
     {
         if (!IsServer)
         {
             return;
         }
 
+        if (notebook == null) return;
         RoomController currentRoom = rooms[CurrentRoomIndex.Value];
-        if (currentRoom != null && currentRoom.NotebookSocket != null && notebook != null)
+
+        // Jeœli jest przy default -> przenieœ do pokoju; w przeciwnym razie przywo³aj do default
+        if (isNotebookAtDefault)
         {
-            SnapToolToSocket(notebook.gameObject, currentRoom.NotebookSocket);
+            if (currentRoom != null && currentRoom.NotebookSocket != null)
+            {
+                SnapToolToSocket(notebook.gameObject, currentRoom.NotebookSocket);
+                isNotebookAtDefault = false;
+            }
+        }
+        else
+        {
+            if (defaultNotebookSocket != null)
+            {
+                SnapToolToSocket(notebook.gameObject, defaultNotebookSocket);
+                isNotebookAtDefault = true;
+            }
         }
     }
 
-    public void DockCalculatorToCurrentRoom()
+    /// <summary>
+    /// Wywo³aj tê funkcjê przyciskiem (np. Przycisk 1 na kontrolerze lub C na klawiaturze)
+    /// </summary>
+    public void ToggleCalculatorSocket()
     {
         if (!IsServer)
         {
             return;
         }
 
+        if (calculator == null) return;
         RoomController currentRoom = rooms[CurrentRoomIndex.Value];
-        if (currentRoom != null && currentRoom.CalculatorSocket != null && calculator != null)
+
+        if (isCalculatorAtDefault)
         {
-            SnapToolToSocket(calculator, currentRoom.CalculatorSocket);
+            if (currentRoom != null && currentRoom.CalculatorSocket != null)
+            {
+                SnapToolToSocket(calculator, currentRoom.CalculatorSocket);
+                isCalculatorAtDefault = false;
+            }
+        }
+        else
+        {
+            if (defaultCalculatorSocket != null)
+            {
+                SnapToolToSocket(calculator, defaultCalculatorSocket);
+                isCalculatorAtDefault = true;
+            }
         }
     }
 
@@ -155,6 +217,40 @@ public class GameManager : NetworkBehaviour
         tool.transform.position = socket.position;
         tool.transform.rotation = socket.rotation;
 
+        if (tool.TryGetComponent<NetworkObject>(out var netObj))
+        {
+            SyncToolPositionClientRpc(netObj, socket.position, socket.rotation);
+        }
+    }
+
+    [ClientRpc]
+    private void SyncToolPositionClientRpc(NetworkObjectReference toolRef, Vector3 pos, Quaternion rot)
+    {
+        if (toolRef.TryGet(out var netObj))
+        {
+            if (netObj.TryGetComponent<Rigidbody>(out var rb))
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+            netObj.transform.position = pos;
+            netObj.transform.rotation = rot;
+        }
+    }
+
+    private void SyncPlayerToCurrentRoom(int targetRoomIdx)
+    {
+        if (rooms == null || targetRoomIdx <= 0 || targetRoomIdx >= rooms.Length) return;
+
+        RoomController startRoom = rooms[0];
+        RoomController targetRoom = rooms[targetRoomIdx];
+
+        if (startRoom != null && targetRoom != null)
+        {
+            Vector3 offset = targetRoom.RoomAnchor.position - startRoom.RoomAnchor.position;
+            ShiftPlayer(offset);
+            targetRoom.OnRoomEntered();
+        }
     }
 
     private void ShiftPlayer(Vector3 offset)
