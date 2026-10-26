@@ -54,8 +54,11 @@ public class DoorWithSlots : NetworkBehaviour, IInteractable
         {
             IsUnlocked.Value = true;
             Debug.Log($"[Room{roomNumber}] SUKCES: Wszystkie sloty zape³nione!");
-            GameManager.Instance.GoToNextRoom();
-            // =========================================================================
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.GoToNextRoom();
+            }
         }
         else
         {

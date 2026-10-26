@@ -43,11 +43,6 @@ public class GameManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         CurrentRoomIndex.OnValueChanged += HandleRoomIndexChanged;
-
-        if (IsClient && !IsServer && CurrentRoomIndex.Value > 0)
-        {
-            SyncPlayerToCurrentRoom(CurrentRoomIndex.Value);
-        }
     }
 
     public override void OnNetworkDespawn()
@@ -65,9 +60,8 @@ public class GameManager : NetworkBehaviour
     public void StartGame()
     {
         if (!IsServer) return;
-        if (CurrentRoomIndex.Value != 0) return; // Gra ju¿ wystartowa³a
+        if (CurrentRoomIndex.Value != 0) return;
 
-        // Jeœli pomijamy tutorial -> skaczemy do pokoju 2, w przeciwnym razie do 1
         int targetRoom = SkipTutorial.Value ? 2 : 1;
 
         if (rooms != null && targetRoom < rooms.Length)
@@ -117,13 +111,11 @@ public class GameManager : NetworkBehaviour
 
         RoomController currentRoom = rooms[roomIdx];
 
-        // 1. Uruchamiamy odliczanie podpowiedzi dla nowego pokoju
         if (notebook != null)
         {
             notebook.LoadRoomHints(currentRoom.HintPages);
         }
 
-        // 2. Resetujemy stan: na starcie nowego pokoju narzêdzia zawsze l¹duj¹ w defaultSocket
         isNotebookAtDefault = true;
         isCalculatorAtDefault = true;
 
@@ -148,7 +140,6 @@ public class GameManager : NetworkBehaviour
         if (notebook == null) return;
         RoomController currentRoom = rooms[CurrentRoomIndex.Value];
 
-        // Jeœli jest przy default -> przenieœ do pokoju; w przeciwnym razie przywo³aj do default
         if (isNotebookAtDefault)
         {
             if (currentRoom != null && currentRoom.NotebookSocket != null)
@@ -167,9 +158,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// Wywo³aj tê funkcjê przyciskiem (np. Przycisk 1 na kontrolerze lub C na klawiaturze)
-    /// </summary>
     public void ToggleCalculatorSocket()
     {
         if (!IsServer)
@@ -200,20 +188,6 @@ public class GameManager : NetworkBehaviour
 
     private void SnapToolToSocket(GameObject tool, Transform socket)
     {
-        // Jeœli narzêdzie by³o chwycone przez gracza, upuszczamy je
-        if (tool.TryGetComponent<GrabbableObject>(out var grabbable))
-        {
-            grabbable.Drop();
-        }
-
-        if (tool.TryGetComponent<Rigidbody>(out var rb))
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.position = socket.position;
-            rb.rotation = socket.rotation;
-        }
-
         tool.transform.position = socket.position;
         tool.transform.rotation = socket.rotation;
 
@@ -238,21 +212,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    private void SyncPlayerToCurrentRoom(int targetRoomIdx)
-    {
-        if (rooms == null || targetRoomIdx <= 0 || targetRoomIdx >= rooms.Length) return;
-
-        RoomController startRoom = rooms[0];
-        RoomController targetRoom = rooms[targetRoomIdx];
-
-        if (startRoom != null && targetRoom != null)
-        {
-            Vector3 offset = targetRoom.RoomAnchor.position - startRoom.RoomAnchor.position;
-            ShiftPlayer(offset);
-            targetRoom.OnRoomEntered();
-        }
-    }
-
     private void ShiftPlayer(Vector3 offset)
     {
         Transform target = playerTransform;
@@ -268,7 +227,6 @@ public class GameManager : NetworkBehaviour
 
         if (cc != null) cc.enabled = false;
 
-        // 2. Jeœli postaæ ma Rigidbody, czyœcimy pêdy
         Rigidbody rb = target.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -277,10 +235,8 @@ public class GameManager : NetworkBehaviour
             rb.position += offset;
         }
 
-        // 3. W³aœciwa zmiana pozycji transformu
         target.position += offset;
 
-        // 4. Ponowne w³¹czenie CharacterController z zaktualizowanym buforem pozycji
         if (cc != null) cc.enabled = true;
     }
 

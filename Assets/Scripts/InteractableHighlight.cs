@@ -38,16 +38,6 @@ public class InteractableHighlight : NetworkBehaviour
         {
             isHighlightedNet.Value = enable;
         }
-        else
-        {
-            RequestHighlightServerRpc(enable);
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestHighlightServerRpc(bool enable)
-    {
-        isHighlightedNet.Value = enable;
     }
 
     private void OnHighlightChanged(bool previousValue, bool newValue)
