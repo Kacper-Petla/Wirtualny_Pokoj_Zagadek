@@ -34,6 +34,11 @@ public class DoorItem : NetworkBehaviour
 
         }
 
+        if (TryGetComponent<Collider>(out var c))
+        {
+            c.enabled = false;
+        }
+
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
