@@ -3,16 +3,18 @@ using UnityEngine;
 
 public class PanicButton : NetworkBehaviour, IInteractable
 {
-    [SerializeField] private GrabbableObject targetChip;
-
-
+    [SerializeField] private GrabbableObject[] targetObjects;
 
     public void Interact()
     {
-        if (targetChip != null)
+        if (targetObjects == null || targetObjects.Length == 0) return;
+
+        foreach (var obj in targetObjects)
         {
-            targetChip.ResetToOrigin();
-            return;
+            if (obj != null)
+            {
+                obj.ResetToOrigin();
+            }
         }
     }
 }

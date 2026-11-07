@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class CoinDispenser : NetworkBehaviour, IInteractable
+public class SimpleDispenser : NetworkBehaviour, IInteractable
 {
     [SerializeField] private GameObject coinPrefab;
 
