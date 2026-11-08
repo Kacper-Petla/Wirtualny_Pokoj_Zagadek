@@ -41,7 +41,16 @@ public class LiquidCylinder : NetworkBehaviour
     private void ChangeLevel(int delta)
     {
         int next = CurrentValue.Value + delta;
-        next = Mathf.Clamp(next, minValue, maxValue);
+
+        if (next > maxValue)
+        {
+            next = minValue;
+        }
+        else if (next < minValue)
+        {
+            next = minValue;
+        }
+
         CurrentValue.Value = next;
     }
 
