@@ -6,14 +6,25 @@ public class LobbyMenuController : NetworkBehaviour
 {
     [Header("Displays")]
     [SerializeField] private TMP_Text skipTutorialStatusText;
+    [SerializeField] private TMP_Text muteAudioStatusText;
+
+    public readonly NetworkVariable<bool> IsAudioMuted = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     public override void OnNetworkSpawn()
     {
         if (GameManager.Instance != null)
         {
             GameManager.Instance.SkipTutorial.OnValueChanged += OnSkipOptionChanged;
-            UpdateDisplay(GameManager.Instance.SkipTutorial.Value);
+            UpdateSkipDisplay(GameManager.Instance.SkipTutorial.Value);
         }
+
+        IsAudioMuted.OnValueChanged += OnAudioMuteChanged;
+        UpdateMuteDisplay(IsAudioMuted.Value);
+        ApplyAudioListenerState(IsAudioMuted.Value);
     }
 
     public override void OnNetworkDespawn()
@@ -22,14 +33,48 @@ public class LobbyMenuController : NetworkBehaviour
         {
             GameManager.Instance.SkipTutorial.OnValueChanged -= OnSkipOptionChanged;
         }
+
+        IsAudioMuted.OnValueChanged -= OnAudioMuteChanged;
+    }
+
+    public void OnToggleMutePressed()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        IsAudioMuted.Value = !IsAudioMuted.Value;
+    }
+
+    private void OnAudioMuteChanged(bool oldVal, bool newVal)
+    {
+        UpdateMuteDisplay(newVal);
+        ApplyAudioListenerState(newVal);
+    }
+
+    private void ApplyAudioListenerState(bool isMuted)
+    {
+        // Globalne wyciszenie wszystkich düwiÍkÛw, AudioSource'Ûw i muzyki na scenie
+        AudioListener.pause = isMuted;
+    }
+
+    private void UpdateMuteDisplay(bool isMuted)
+    {
+        if (muteAudioStatusText != null)
+        {
+            muteAudioStatusText.text = isMuted
+                ? "<color=red>[X] DèWI K: WYCISZONY</color>"
+                : "<color=green>[ ] DèWI K: W£•CZONY</color>";
+        }
     }
 
     private void OnSkipOptionChanged(bool oldVal, bool newVal)
     {
-        UpdateDisplay(newVal);
+        UpdateSkipDisplay(newVal);
     }
 
-    private void UpdateDisplay(bool isSkipped)
+    private void UpdateSkipDisplay(bool isSkipped)
     {
         if (skipTutorialStatusText != null)
         {

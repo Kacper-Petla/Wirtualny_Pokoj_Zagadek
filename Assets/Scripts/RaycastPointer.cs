@@ -86,6 +86,12 @@ public class RaycastPointer : NetworkBehaviour
         {
             GameManager.Instance.ToggleCalculatorSocket();
         }
+
+        // Klawisz P - przejœcie do nastêpnego pokoju (debug / test)
+        if (keyboard.pKey.wasPressedThisFrame)
+        {
+            GameManager.Instance.GoToNextRoom();
+        }
     }
 
     private void HandleHoverHighlight()
