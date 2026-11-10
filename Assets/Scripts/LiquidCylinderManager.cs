@@ -19,6 +19,7 @@ public class LiquidCylinderManager : NetworkBehaviour
     [SerializeField] private TMP_Text noteContentText;
     [SerializeField] private TMP_Text feedbackText;
 
+    [SerializeField] private SimpleButton valveHandleInteractable;
 
     [SerializeField] private LiquidCylinder[] cylinders = new LiquidCylinder[2];
 
@@ -43,6 +44,10 @@ public class LiquidCylinderManager : NetworkBehaviour
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
     );
 
+    public readonly NetworkVariable<bool> IsValveInstalled = new(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
+    );
+
     private readonly NetworkVariable<int> selectedIndex = new(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
     );
@@ -59,6 +64,7 @@ public class LiquidCylinderManager : NetworkBehaviour
     {
         syncedNote.OnValueChanged += (o, n) => { if (noteContentText != null) noteContentText.text = n.ToString(); };
         syncedFeedback.OnValueChanged += (o, n) => { if (feedbackText != null) feedbackText.text = n.ToString(); };
+        IsValveInstalled.OnValueChanged += HandleValveInstalledChanged;
 
         if (noteContentText != null && !syncedNote.Value.IsEmpty)
             noteContentText.text = syncedNote.Value.ToString();
@@ -70,6 +76,8 @@ public class LiquidCylinderManager : NetworkBehaviour
         {
             InitDataset();
         }
+
+        UpdateValveInteractableState(IsValveInstalled.Value);
     }
 
     private void InitDataset()
@@ -84,6 +92,19 @@ public class LiquidCylinderManager : NetworkBehaviour
                            $"ï <b>Sektor C (Zielony)</b>: {d.probC}% (wadliwe: {d.defectC}%)\n\n" +
                            $"Oblicz ca≥kowite prawdopodobieÒstwo wylosowania wadliwego øetonu. " +
                            $"Ustaw poziom w promilach na cylindrach ciúnienia i przekrÍÊ zawÛr bezpieczeÒstwa.";
+
+        syncedFeedback.Value = "<color=yellow>BRAK KURKA ZAWORU. ZNAJDè ELEMENT W SALI.</color>";
+
+        Debug.Log($"[LiquidCylinder] Cel: {d.expectedPermille}");
+    }
+
+    public void InstallValveHandle()
+    {
+        if (!IsServer || IsValveInstalled.Value) return;
+
+        IsValveInstalled.Value = true;
+        syncedFeedback.Value = "<color=yellow>KUREK ZAMONTOWANY. USTAW WARTOåCI NA CYLINDRACH.</color>";
+        PlayAudio(3); // DüwiÍk montaøu
     }
 
     public void OnValveTurned()
@@ -123,6 +144,24 @@ public class LiquidCylinderManager : NetworkBehaviour
 
             syncedFeedback.Value = $"<color=red>NIEPOPRAWNE CIåNIENIE ({totalEntered}â). ZRESETOWANO POZIOMY.</color>";
             PlayAudio(2); // B≥πd
+        }
+    }
+
+    private void HandleValveInstalledChanged(bool oldVal, bool newVal)
+    {
+        UpdateValveInteractableState(newVal);
+    }
+
+    private void UpdateValveInteractableState(bool isInstalled)
+    {
+        if (valveHandleInteractable != null)
+        {
+            // W≥πczamy skrypt i collider kurka dopiero po jego fizycznym wpiÍciu w gniazdo
+            valveHandleInteractable.enabled = isInstalled;
+            if (valveHandleInteractable.TryGetComponent<Collider>(out var col))
+            {
+                col.enabled = isInstalled;
+            }
         }
     }
 

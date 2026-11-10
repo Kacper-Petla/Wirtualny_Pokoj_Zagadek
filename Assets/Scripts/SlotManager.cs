@@ -327,7 +327,7 @@ public class SlotManager : NetworkBehaviour
         float mean2 = (w1 * val1 + w2 * val2 + w3 * val3) / 10.0f;
 
         syncedBoard2Text.Value = $"Nagrody:\n3x🍒 - {val1}\n3x🔔 - {val2}\n3x💎 - {val3}";
-        syncedNoteText.Value = $"Zapiski częstości (wagi / 10):\n🍒 Szansa: {w1}\n🔔 Szansa: {w2}\n💎 Szansa: {w3}";
+        syncedNoteText.Value = $"Zapiski częstości losoawnia:\n3x🍒 Wypadły {w1} razy\n3x🔔 Wypadły {w2} razy\n3x💎 Wypadły {w3} razy";
 
         targetCode2 = ExtractDigits(mean2);
         machine2.SetupReelOptions(targetCode2);

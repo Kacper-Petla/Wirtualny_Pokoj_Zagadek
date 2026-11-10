@@ -14,17 +14,12 @@ public class CardManager : NetworkBehaviour
         public int expectedDenominator; // Oczekiwana suma kart (mianownik)
     }
 
-    [Header("Displays")]
     [SerializeField] private TMP_Text riddleDisplayText;
     [SerializeField] private TMP_Text statusFeedbackText;
 
-    [Header("Drop Zone Reference")]
     [SerializeField] private CardContainer cardDropZone;
 
-    [Header("Reward")]
-    [Tooltip("Przedmiot aktywuj¹cy kolejn¹ zagadkê (np. klucz, bateria, bezpiecznik)")]
-    [SerializeField] private GameObject rewardItem;
-    [SerializeField] private Transform rewardSpawnPoint;
+    [SerializeField] private GameObject keyItem;
 
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
@@ -83,7 +78,7 @@ public class CardManager : NetworkBehaviour
         string.Empty, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
     );
 
-    private readonly NetworkVariable<FixedString64Bytes> syncedFeedbackText = new(
+    private readonly NetworkVariable<FixedString512Bytes> syncedFeedbackText = new(
         string.Empty, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
     );
 
@@ -92,6 +87,8 @@ public class CardManager : NetworkBehaviour
         syncedRiddleText.OnValueChanged += (o, n) => { if (riddleDisplayText != null) riddleDisplayText.text = n.ToString(); };
         syncedFeedbackText.OnValueChanged += (o, n) => { if (statusFeedbackText != null) statusFeedbackText.text = n.ToString(); };
         IsPuzzleCompleted.OnValueChanged += HandleCompletedChanged;
+
+        ApplyRewardState(IsPuzzleCompleted.Value);
 
         if (riddleDisplayText != null && !syncedRiddleText.Value.IsEmpty)
             riddleDisplayText.text = syncedRiddleText.Value.ToString();
@@ -103,11 +100,6 @@ public class CardManager : NetworkBehaviour
         {
             InitPuzzle();
         }
-
-        if (IsPuzzleCompleted.Value)
-        {
-            UnlockRewardVisuals();
-        }
     }
 
     private void InitPuzzle()
@@ -116,10 +108,20 @@ public class CardManager : NetworkBehaviour
         selectedRiddleIndex.Value = chosen;
 
         syncedRiddleText.Value = prebakedRiddles[chosen].riddleDescription;
-        syncedFeedbackText.Value = "<color=yellow>U³ó¿ odpowiedni¹ sumê kart i naciœnij dzwonek/przycisk.</color>";
+        syncedFeedbackText.Value = "<color=yellow>U³ó¿ odpowiedni¹ sumê kart i naciœnij przycisk.</color>";
+
+        Debug.Log($"[Cards] Cel: {prebakedRiddles[chosen].expectedDenominator}");
     }
 
-    // --- SPRAWDZENIE ODPOWIEDZI ---
+    public void DisplayRiddle()
+    {
+        if (IsServer && !IsPuzzleCompleted.Value)
+        {
+            syncedFeedbackText.Value = "<color=yellow>U³ó¿ odpowiedni¹ sumê kart i naciœnij przycisk.</color>";
+            syncedRiddleText.Value = prebakedRiddles[selectedRiddleIndex.Value].riddleDescription;
+        }
+    }
+
 
     public void OnSubmitButtonPressed()
     {
@@ -134,7 +136,6 @@ public class CardManager : NetworkBehaviour
             IsPuzzleCompleted.Value = true;
             syncedFeedbackText.Value = $"<color=green>POPRAWNY MIANOWNIK (1/{expected})! PRZEDMIOT ODBLOKOWANY.</color>";
             PlayAudio(1); // Sukces
-            UnlockReward();
         }
         else
         {
@@ -144,40 +145,30 @@ public class CardManager : NetworkBehaviour
         }
     }
 
-    private void UnlockReward()
-    {
-        UnlockRewardVisuals();
-    }
-
     private void HandleCompletedChanged(bool oldVal, bool newVal)
     {
-        if (newVal)
-        {
-            UnlockRewardVisuals();
-        }
+        ApplyRewardState(newVal);
     }
 
-    private void UnlockRewardVisuals()
+    private void ApplyRewardState(bool revealed)
     {
-        if (rewardItem != null)
+        if (keyItem == null) return;
+
+        var renderers = keyItem.GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers) r.enabled = revealed;
+
+        var colliders = keyItem.GetComponentsInChildren<Collider>(true);
+        foreach (var c in colliders) c.enabled = revealed;
+
+        if (keyItem.TryGetComponent<GrabbableObject>(out var grabbable))
         {
-            rewardItem.SetActive(true);
+            grabbable.enabled = revealed;
+        }
 
-            if (rewardSpawnPoint != null)
-            {
-                rewardItem.transform.position = rewardSpawnPoint.position;
-                rewardItem.transform.rotation = rewardSpawnPoint.rotation;
-            }
-
-            if (rewardItem.TryGetComponent<GrabbableObject>(out var grabbable))
-            {
-                grabbable.enabled = true;
-            }
-
-            if (rewardItem.TryGetComponent<Rigidbody>(out var rb))
-            {
-                rb.isKinematic = false;
-            }
+        if (IsServer && keyItem.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = !revealed;
+            rb.useGravity = revealed;
         }
     }
 

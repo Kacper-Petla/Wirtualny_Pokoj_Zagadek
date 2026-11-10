@@ -181,7 +181,6 @@ public class CoinManager : NetworkBehaviour
 
         syncedRiddleText.Value = riddleText;
 
-        Debug.Log($"[ProbabilityPuzzle] Wylosowano: R={red}, B={blue}, G={green}");
         Debug.Log($"[ProbabilityPuzzle] Cele: R={targetRed}, B={targetBlue}, G={targetGreen} | G³ówny={targetMain}/{Denominator}");
     }
 }
