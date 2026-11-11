@@ -23,7 +23,7 @@ public class SafeManager : NetworkBehaviour
 
     [SerializeField] private Transform safeDoorTransform;
     [SerializeField] private Vector3 doorOpenEulerAngles = new Vector3(0f, -90f, 0f);
-    [SerializeField] private GameObject firstKeyObject;
+    [SerializeField] private GameObject keyItem;
 
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
@@ -78,6 +78,8 @@ public class SafeManager : NetworkBehaviour
 
         if (ghostDialogueText != null && !syncedGhostText.Value.IsEmpty)
             ghostDialogueText.text = syncedGhostText.Value.ToString();
+
+        ApplyRewardState(IsSafeOpen.Value);
 
         if (IsServer)
         {
@@ -195,12 +197,28 @@ public class SafeManager : NetworkBehaviour
             safeDoorTransform.localRotation = doorClosedRotation * Quaternion.Euler(doorOpenEulerAngles);
         }
 
-        if (firstKeyObject != null)
+        ApplyRewardState(true);
+    }
+
+    private void ApplyRewardState(bool revealed)
+    {
+        if (keyItem == null) return;
+
+        var renderers = keyItem.GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers) r.enabled = revealed;
+
+        var colliders = keyItem.GetComponentsInChildren<Collider>(true);
+        foreach (var c in colliders) c.enabled = revealed;
+
+        if (keyItem.TryGetComponent<GrabbableObject>(out var grabbable))
         {
-            if (firstKeyObject.TryGetComponent<GrabbableObject>(out var grabbable))
-            {
-                grabbable.enabled = true;
-            }
+            grabbable.enabled = revealed;
+        }
+
+        if (IsServer && keyItem.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = !revealed;
+            rb.useGravity = revealed;
         }
     }
 
