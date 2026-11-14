@@ -189,6 +189,8 @@ public class AbacusManager : NetworkBehaviour
         targetSolutions[6] = variance;
         targetSolutions[7] = stdDevUnderRoot;
 
+        Debug.Log($"[Abakus] Cel: {avg}, {diff1Sq}, {diff2Sq}, {diff3Sq}, {diff4Sq}, {sumSquares}, {variance}");
+
         syncedNoteText.Value = $"Aby uruchomiæ mechanizm awaryjnego zasilania, musisz zrozumieæ, jak stabilne by³y moje ma³e stawkowe eksperymenty.\n\n" +
                                   $"Spójrz na historiê czterech identycznych turniejów z wygranymi:\n" +
                                   $"<b>{data.a},  {data.b},  {data.c},  {data.d}</b>";

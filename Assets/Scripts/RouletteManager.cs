@@ -26,7 +26,7 @@ public class RouletteManager : NetworkBehaviour
     private float openXOffset = 2.0f;
     private Vector3 openRotationEuler = new Vector3(90f, 0f, 0f);
 
-    private string riddleText = $"<mark=#FFFFFF0F><color=white>Maszyna zaciê³a siê. Za ka¿dym razem wypada mediana z ostatnich {NumberCount} losowañ.</color></mark>";
+    private string riddleText = $"<mark=#FFFFFF0F><color=white>Maszyna zaciê³a siê. Za ka¿dym razem wypada mediana z ostatnich {NumberCount} losowañ. Obstaw j¹ i zakrêæ by wygraæ!</color></mark>";
     private string winMessage = "<mark=#FFFFFF0F><color=green>W³aœciwe pole obstawione. Oto twoja nagroda.</color></mark>";
     private string loseMessage = "<mark=#FFFFFF0F><color=red>B³êdne pole obstawione.</color></mark>";
     private string noChipMessage = "<mark=#FFFFFF0F><color=red>¯eton nie znajduje siê na ¿adnym polu!</color></mark>";
@@ -190,7 +190,7 @@ public class RouletteManager : NetworkBehaviour
         Array.Sort(sortedCopy);
         correctFieldValue.Value = sortedCopy[med];
 
-        Debug.Log($"[Roulette] Posortowane: {string.Join(", ", sortedCopy)} | Mediana (Cel): {correctFieldValue.Value}");
+        Debug.Log($"[Ruletka] Mediana: {correctFieldValue.Value}");
     }
 
     public void Verify()

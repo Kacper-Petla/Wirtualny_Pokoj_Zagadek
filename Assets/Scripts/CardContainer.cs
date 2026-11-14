@@ -63,7 +63,7 @@ public class CardContainer : NetworkBehaviour
     {
         if (currentSumDisplayText != null)
         {
-            currentSumDisplayText.text = $"SUMA KART: <b>{sum}</b>";
+            currentSumDisplayText.text = $"Suma kart: <b><u> 1 </u>\n{sum}</b>";
         }
     }
 }
