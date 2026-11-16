@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.lzwpcore.framework": "file:C:/Users/Left-2/Desktop/DUPA/com.lzwpcore.framework-1.2.0.tgz",
     "com.unity.ai.navigation": "2.0.14",
     "com.unity.collab-proxy": "2.13.6",
     "com.unity.ide.rider": "3.0.38",

@@ -1,5 +1,18 @@
 {
   "dependencies": {
+    "com.lzwpcore.framework": {
+      "version": "file:C:/Users/Left-2/Desktop/DUPA/com.lzwpcore.framework-1.2.0.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.unity.netcode.gameobjects": "2.9.1",
+        "com.unity.inputsystem": "1.18.0",
+        "com.unity.nuget.newtonsoft-json": "3.2.2",
+        "com.unity.modules.audio": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0",
+        "com.unity.modules.physics": "1.0.0"
+      }
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.14",
       "depth": 0,
@@ -90,6 +103,13 @@
     },
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.6",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.2",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
