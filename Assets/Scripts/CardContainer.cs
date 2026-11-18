@@ -63,7 +63,14 @@ public class CardContainer : NetworkBehaviour
     {
         if (currentSumDisplayText != null)
         {
-            currentSumDisplayText.text = $"Suma kart: <b><u> 1 </u>\n{sum}</b>";
+            if (sum == 0)
+            {
+                currentSumDisplayText.text = $"Suma kart: <b><u> 1 </u>\n==</b>";
+            }
+            else
+            {
+                currentSumDisplayText.text = $"Suma kart: <b><u> 1 </u>\n{sum}</b>";
+            }
         }
     }
 }

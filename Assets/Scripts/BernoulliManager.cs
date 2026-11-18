@@ -47,6 +47,7 @@ public class BernoulliManager : NetworkBehaviour
             valN = "4", valK = "3", valP = "1/37", valQ = "36/37",
             distractors = new string[] { "5", "2", "1", "7", "35/37", "1/38" }
         },
+        /*
         new BernoulliDataSet
         {
             ghostSpeech = "Rzucam klasyczn¹ koœci¹ do gry. Uwolniê siê, jeœli <b>szóstka</b> wypadnie dok³adnie <b>2 razy w 5 rzutach</b>...\n" +
@@ -61,6 +62,7 @@ public class BernoulliManager : NetworkBehaviour
             valN = "3", valK = "2", valP = "18/37", valQ = "19/37",
             distractors = new string[] { "4", "1", "1/37", "36/37", "18/36", "2/3" }
         }
+        */
     };
 
     public readonly NetworkVariable<bool> IsPuzzleCompleted = new(

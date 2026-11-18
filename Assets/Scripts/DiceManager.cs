@@ -25,7 +25,7 @@ public class DiceManager : NetworkBehaviour
     [SerializeField] private AudioClip solvedAudio;
 
 
-    private string introDialogue = $"<mark=#FFFFFF0F><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am w notatniku {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.</color></mark>";
+    private string introDialogue = $"<mark=#FFFFFF0F><color=white>Mam wra¿enie, ¿e te koœci nie s¹ równo wywa¿one. Spisa³am w moim notatniku {CombinationsCount} kombinacji, jakie mi wypad³y, ale nie wiem, jaka jest dominanta ich sumy.\nDaj znaæ jak skoñczysz.</color></mark>";
     private string successDialogue = "<mark=#FFFFFF0F><color=green>Niewiarygodne! To dok³adnie ta liczba. Trzymaj to w nagrodê.</color></mark>";
     private string failDialogue = "<mark=#FFFFFF0F><color=red>Coœ siê nie zgadza. Suma u³o¿onych koœci to nie dominanta z moich zapisków.</color></mark>";
     private string alreadySolvedDialogue = "<mark=#FFFFFF0F><color=white>Dziêkujê za pomoc, zagadka zosta³a ju¿ rozwi¹zana.</color></mark>";

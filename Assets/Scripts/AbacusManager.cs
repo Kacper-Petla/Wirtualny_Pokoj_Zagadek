@@ -29,7 +29,6 @@ public class AbacusManager : NetworkBehaviour
 
     private readonly PresetDataSet[] prebakedPool = new PresetDataSet[]
     {
-        new PresetDataSet { a = 3,  b = 7,  c = 13, d = 17 }, // Avg=10. Kwadraty: 49, 9, 9, 49. Suma=116 -> Var=29
         new PresetDataSet { a = 4,  b = 8,  c = 12, d = 16 }, // Avg=10. Kwadraty: 36, 4, 4, 36. Suma=80 -> Var=20
         new PresetDataSet { a = 12, b = 14, c = 18, d = 20 }, // Avg=16. Kwadraty: 16, 4, 4, 16. Suma=40 -> Var=10
         new PresetDataSet { a = 2,  b = 6,  c = 10, d = 14 }, // Avg=8.  Kwadraty: 36, 4, 4, 36. Suma=80 -> Var=20
@@ -191,7 +190,7 @@ public class AbacusManager : NetworkBehaviour
 
         Debug.Log($"[Abakus] Cel: {avg}, {diff1Sq}, {diff2Sq}, {diff3Sq}, {diff4Sq}, {sumSquares}, {variance}");
 
-        syncedNoteText.Value = $"Aby uruchomiæ mechanizm awaryjnego zasilania, musisz zrozumieæ, jak stabilne by³y moje ma³e stawkowe eksperymenty.\n\n" +
+        syncedNoteText.Value = $"Aby uwolniæ siê z tego miejsca, musisz zrozumieæ, jak stabilne by³y moje ma³e eksperymenty.\n\n" +
                                   $"Spójrz na historiê czterech identycznych turniejów z wygranymi:\n" +
                                   $"<b>{data.a},  {data.b},  {data.c},  {data.d}</b>";
     }

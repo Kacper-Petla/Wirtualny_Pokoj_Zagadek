@@ -9,7 +9,6 @@ public class PhoneManager : NetworkBehaviour
     [Serializable]
     public struct SlotRiddleData
     {
-        public int cost;
         public string win1Fraction;
         public int win1Amount;
         public string win2Fraction;
@@ -43,11 +42,11 @@ public class PhoneManager : NetworkBehaviour
 
     private readonly SlotRiddleData[] datasets = new SlotRiddleData[]
     {
-        new SlotRiddleData { cost = 50, win1Fraction = "1/5", win1Amount = 150, win2Fraction = "3/10", win2Amount = 100, win3Fraction = "1/2", expectedNetProfit = 10 },
-        new SlotRiddleData { cost = 40, win1Fraction = "1/4", win1Amount = 160, win2Fraction = "2/5",  win2Amount = 50,  win3Fraction = "7/20", expectedNetProfit = 20 },
-        new SlotRiddleData { cost = 60, win1Fraction = "1/10", win1Amount = 300, win2Fraction = "1/2", win2Amount = 110, win3Fraction = "2/5", expectedNetProfit = 25 },
-        new SlotRiddleData { cost = 30, win1Fraction = "1/5", win1Amount = 200, win2Fraction = "3/10", win2Amount = 100, win3Fraction = "1/2", expectedNetProfit = 40 },
-        new SlotRiddleData { cost = 45, win1Fraction = "1/4", win1Amount = 120, win2Fraction = "3/10", win2Amount = 100, win3Fraction = "9/20", expectedNetProfit = 15 }
+        new SlotRiddleData { win1Fraction = "1/5", win1Amount = 150, win2Fraction = "3/10", win2Amount = 100, win3Fraction = "1/2", expectedNetProfit = 60 },
+        new SlotRiddleData { win1Fraction = "1/4", win1Amount = 160, win2Fraction = "2/5",  win2Amount = 50,  win3Fraction = "7/20", expectedNetProfit = 60 },
+        new SlotRiddleData { win1Fraction = "1/10", win1Amount = 300, win2Fraction = "1/2", win2Amount = 110, win3Fraction = "2/5", expectedNetProfit = 85 },
+        new SlotRiddleData { win1Fraction = "1/5", win1Amount = 200, win2Fraction = "3/10", win2Amount = 100, win3Fraction = "1/2", expectedNetProfit = 70 },
+        new SlotRiddleData { win1Fraction = "1/4", win1Amount = 120, win2Fraction = "3/10", win2Amount = 100, win3Fraction = "9/20", expectedNetProfit = 60 }
     };
 
     // Cyfry: [0] = dziesiπtki, [1] = jednoúci
@@ -92,12 +91,11 @@ public class PhoneManager : NetworkBehaviour
         selectedIndex.Value = chosen;
 
         var d = datasets[chosen];
-        syncedRulesText.Value = $"<b>REGU£Y AUTOMATU:</b>\n\n" +
-                               $"Koszt jednej gry: <b>{d.cost} monet</b>.\n" +
+        syncedRulesText.Value = $"<b>REGU£Y GRY:</b>\n\n" +
                                $"ï Szansa <b>{d.win1Fraction}</b> na wygranπ <b>{d.win1Amount} monet</b>\n" +
                                $"ï Szansa <b>{d.win2Fraction}</b> na wygranπ <b>{d.win2Amount} monet</b>\n" +
                                $"ï Szansa <b>{d.win3Fraction}</b>, øe nie wygrasz nic (0 monet)\n\n" +
-                               $"Oblicz úredni <b>zysk netto</b> na jednej grze i zadzwoÒ pod ten numer na telefonie.";
+                               $"Oblicz úredni zysk na jednej grze i zadzwoÒ pod ten numer na telefonie.";
 
         syncedFeedbackText.Value = "WPROWADè NUMER";
 

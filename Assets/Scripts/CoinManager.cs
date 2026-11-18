@@ -177,7 +177,7 @@ public class CoinManager : NetworkBehaviour
                       $"• <color=red>{red} czerwonych</color>\n" +
                       $"• <color=lightblue>{blue} niebieskich</color>\n" +
                       $"• <color=green>{green} zielonych</color>\n\n" +
-                      $"Jeœli bez patrzenia wyci¹gniesz kolejno dwa ¿etony, jakie jest prawdopodobieñstwo, ¿e oba ¿etony bêd¹ w tym samym kolorze?</color></mark>\n";
+                      $"Jeœli bez zwracania wyci¹gniesz kolejno dwa ¿etony, jakie jest prawdopodobieñstwo, ¿e oba ¿etony bêd¹ w tym samym kolorze?</color></mark>\n";
 
         syncedRiddleText.Value = riddleText;
 

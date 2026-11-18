@@ -114,12 +114,12 @@ public class KeypadManager : NetworkBehaviour
         sb.AppendLine("<b>== WYNIKI TURNIEJU (TOP 20) ==</b>");
         for (int i = 0; i < scores.Count; i++)
         {
-            sb.AppendLine($"#{i + 1:D2} - {scores[i]} pkt");
+            sb.AppendLine($"#{20 - i:D2} - {scores[i]} pkt");
         }
         SyncedLeaderboardText.Value = sb.ToString();
 
         // 4. Komunikat na drzwiach
-        SyncedDoorRiddleText.Value = $"Wstêp tylko dla graczy, których wynik znajduje siê w <b>{chosenPercentile}.</b> centylu lub wy¿ej.";
+        SyncedDoorRiddleText.Value = $"Wstêp tylko dla gracza, którego wynik znajduje siê w <b>{chosenPercentile}.</b> centylu. WprowadŸ minimalny wymagany wynik.";
     }
 
     public void OnKeypadDigitPressed(int digit)
